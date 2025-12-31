@@ -1,7 +1,7 @@
 import streamlit as st
 import time
 import random
-from streamlit_drawable_canvas import st_canvas
+import math
 
 st.set_page_config(page_title="MASH", layout="centered")
 st.title("🏠 MASH")
@@ -123,26 +123,38 @@ if st.session_state.stage == "tally":
 # SWIRL MODE
 
 if st.session_state.stage == "swirl":
-    st.header("🎨 Draw Your Swirl")
+    st.header("🎨 Drawing a Swirl...")
 
-    st.write("Draw freely. Wait at least 3 seconds, then press STOP.")
+    if st.session_state.start_time is None:
+        st.session_state.start_time = time.time()
 
-    canvas = st_canvas(
-        stroke_width=3,
-        stroke_color="#000000",
-        background_color="#FFFFFF",
-        height=300,
-        width=300,
-        drawing_mode="freedraw",
-        key="canvas",
-    )
+    elapsed = time.time() - st.session_state.start_time
 
-    if time.time() - st.session_state.start_time >= 3:
-        if st.button("STOP"):
-            strokes = len(canvas.json_data["objects"]) if canvas.json_data else 5
-            st.session_state.count = max(3, strokes)
-            st.session_state.stage = "result"
-            st.rerun()
+    st.write("Watch the swirl grow. Wait at least 3 seconds, then press STOP.")
+
+    # Size grows with time
+    radius = min(10, int(elapsed * 1.5))
+
+    swirl_lines = []
+    for y in range(-radius, radius + 1):
+        line = ""
+        for x in range(-radius * 2, radius * 2 + 1):
+            if radius > 0 and abs(math.sqrt((x / 2) ** 2 + y ** 2) - radius) < 0.6:
+                line += "●"
+            else:
+                line += " "
+        swirl_lines.append(line)
+
+    st.code("\n".join(swirl_lines))
+
+    if elapsed < 3:
+        st.warning("⏳ Wait at least 3 seconds before stopping")
+
+    if elapsed >= 3 and st.button("STOP"):
+        # Convert elapsed time to a reasonable count
+        st.session_state.count = max(3, int(elapsed * random.randint(2, 4)))
+        st.session_state.stage = "result"
+        st.rerun()
 
 # FINAL RESULT (RULE-CORRECT)
 
@@ -184,3 +196,4 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
+
