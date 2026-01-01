@@ -212,31 +212,31 @@ if st.session_state.stage == "swirl":
 # FINAL RESULT
 # --------------------------------------------------
 
-#if st.session_state.stage == "result":
-#    st.header("🎉 Your MASH Future")
+if st.session_state.stage == "result":
+    st.header("🎉 Your MASH Future")
 
-#    count = st.session_state.count
+    count = st.session_state.count
 
     # MASH result
-#    mash = eliminate_to_one(list("MASH"), count)
-#    HOUSE_MAP = {"A": "Apartment", "S": "Shack", "H": "House"}
+    mash = eliminate_to_one(list("MASH"), count)
+    HOUSE_MAP = {"A": "Apartment", "S": "Shack", "H": "House"}
 
-#    if mash in HOUSE_MAP:
-#        st.success(f"🏠 House Type: {HOUSE_MAP[mash]}")
+    if mash in HOUSE_MAP:
+        st.success(f"🏠 House Type: {HOUSE_MAP[mash]}")
 
-#    st.subheader("👤 Player 1")
-#    for cat in st.session_state.categories:
-#        result = eliminate_to_one(st.session_state.answers_p1[cat], count)
-#        st.write(f"**{cat}:** {result}")
+    st.subheader("👤 Player 1")
+    for cat in st.session_state.categories:
+        result = eliminate_to_one(st.session_state.answers_p1[cat], count)
+        st.write(f"**{cat}:** {result}")
 
-#    if st.session_state.two_player:
-#        st.subheader("👤 Player 2")
-#        for cat in st.session_state.categories:
-#            result = eliminate_to_one(st.session_state.answers_p2[cat], count)
-#            st.write(f"**{cat}:** {result}")
+    if st.session_state.two_player:
+        st.subheader("👤 Player 2")
+        for cat in st.session_state.categories:
+            result = eliminate_to_one(st.session_state.answers_p2[cat], count)
+            st.write(f"**{cat}:** {result}")
 
-#    if st.button("Play Again"):
-#        reset_game()
+    if st.button("Play Again"):
+        reset_game()
 
 # --------------------------------------------------
 # PERSISTENT MEMORY (JSON + SQLITE)
@@ -401,6 +401,7 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
+
 
 
 
