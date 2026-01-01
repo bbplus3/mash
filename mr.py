@@ -97,7 +97,7 @@ if st.session_state.stage == "categories":
             st.session_state.answers_p1[c] = []
             st.session_state.answers_p2[c] = []
         st.session_state.stage = "answers"
-        st.rerun()
+        #st.rerun()
 
 # --------------------------------------------------
 # STAGE 2 — ANSWERS
@@ -401,4 +401,5 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
+
 
