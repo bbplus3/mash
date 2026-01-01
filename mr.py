@@ -337,11 +337,11 @@ STYLE_PROMPTS = {
 # --------------------------------------------------
 def generate_summary(context, style):
     prompt = f"""
-You are a fortune teller.
+#You are a fortune teller.
 
-Tone: {STYLE_PROMPTS[style]}
+#Tone: {STYLE_PROMPTS[style]}
 
-ONLY use these facts:
+#ONLY use these facts:
 {context}
 
 Write one paragraph.
@@ -401,3 +401,4 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
+
