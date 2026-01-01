@@ -97,7 +97,7 @@ if st.session_state.stage == "categories":
             st.session_state.answers_p1[c] = []
             st.session_state.answers_p2[c] = []
         st.session_state.stage = "answers"
-        #st.rerun()
+        st.rerun()
 
 # --------------------------------------------------
 # STAGE 2 — ANSWERS
@@ -326,10 +326,10 @@ def retrieve_context(index, texts):
 # NARRATIVE STYLES
 # --------------------------------------------------
 STYLE_PROMPTS = {
-    "Whimsical": "Playful, imaginative, lighthearted",
-    "Romantic": "Warm, emotional, love-focused",
-    "Chaotic": "Unhinged, absurd, mischievous",
-    "Serious": "Calm, grounded, realistic"
+    "Whimsical": "",
+    "Romantic": "",
+    "Chaotic": "",
+    "Serious": ""
 }
 
 # --------------------------------------------------
@@ -339,7 +339,7 @@ def generate_summary(context, style):
     prompt = f"""
 #You are a fortune teller.
 
-#Tone: {STYLE_PROMPTS[style]}
+Tone: {STYLE_PROMPTS[style]}
 
 #ONLY use these facts:
 {context}
@@ -401,5 +401,6 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
+
 
 
