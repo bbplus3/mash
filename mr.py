@@ -47,11 +47,19 @@ def load_image_model():
 # HELPERS
 # --------------------------------------------------
 def eliminate_to_one(options, count):
+    if not options:
+        return "❌ No answer provided"
+
+    if count <= 0:
+        count = 1
+
     idx = 0
     opts = options.copy()
+
     while len(opts) > 1:
         idx = (idx + count - 1) % len(opts)
         opts.pop(idx)
+
     return opts[0]
 
 def reset_game():
@@ -99,8 +107,13 @@ if st.session_state.stage == "answers":
                 st.session_state.answers[cat].append(v)
 
     if st.button("Lock Answers"):
-        st.session_state.stage = "count"
-        st.rerun()
+        missing = [c for c, v in st.session_state.answers.items() if len(v) == 0]
+
+        if missing:
+            st.error(f"Missing answers for: {', '.join(missing)}")
+        else:
+            st.session_state.stage = "count"
+            st.rerun()
 
 # --------------------------------------------------
 # STAGE 3 — COUNT
@@ -234,8 +247,3 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
-
-
-
-
-
