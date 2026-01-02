@@ -37,6 +37,8 @@ if "stage" not in st.session_state:
     st.session_state.answers = {}
     st.session_state.count = None
 
+if "story" not in st.session_state:
+    st.session_state.story = None
 # --------------------------------------------------
 # STAGE 1 — CATEGORIES
 # --------------------------------------------------
@@ -130,7 +132,7 @@ STYLE_ADJECTIVES = {
 # --------------------------------------------------
 # STORY BUILDER
 # --------------------------------------------------
-def build_story(results, style, adlibs):
+def build_story(results, style, madlibs):
     adj = STYLE_ADJECTIVES.get(style, {})
     parts = []
 
@@ -161,24 +163,24 @@ def build_story(results, style, adlibs):
         if k not in {"House", "City", "Job", "Spouse", "Kids", "Car"}:
             parts.append(f"{k} plays a role through {v}.")
 
-    # Ad-lib bonuses
-    if adlibs.get("trait"):
-        parts.append(f"This person is known for being {adlibs['trait']}.")
-    if adlibs.get("habit"):
-        parts.append(f"A defining habit involves {adlibs['habit']}.")
-    if adlibs.get("twist"):
-        parts.append(f"Unexpectedly, {adlibs['twist']}.")
-    if adlibs.get("favorite"):
-        parts.append(f"They especially value {adlibs['favorite']}.")
+    # Mad-lib bonuses
+    if madlibs.get("trait"):
+        parts.append(f"This person is known for being {madlibs['trait']}.")
+    if madlibs.get("habit"):
+        parts.append(f"A defining habit involves {madlibs['habit']}.")
+    if madlibs.get("twist"):
+        parts.append(f"Unexpectedly, {madlibs['twist']}.")
+    if madlibs.get("favorite"):
+        parts.append(f"They especially value {madlibs['favorite']}.")
 
     return " ".join(parts)
 
 # --------------------------------------------------
 # IMAGE PROMPT
 # --------------------------------------------------
-def build_image_prompt(results, style, adlibs):
+def build_image_prompt(results, style, madlibs):
     core = list(results.values())
-    extras = ", ".join(v for v in adlibs.values() if v)
+    extras = ", ".join(v for v in madlibs.values() if v)
     return (
         f"illustrated life scene, {style.lower()} tone, "
         + ", ".join(core)
@@ -201,9 +203,9 @@ if st.session_state.stage == "result":
         st.write(f"**{k}:** {v}")
 
     st.divider()
-    st.subheader("✏️ Optional Story Extras (Ad-Lib Style)")
+    st.subheader("✏️ Mad-Lib Story Extras (Optional)")
 
-    adlibs = {
+    madlibs = {
         "trait": st.text_input("Defining personality trait"),
         "habit": st.text_input("Recurring habit"),
         "twist": st.text_input("Unexpected twist"),
@@ -215,12 +217,13 @@ if st.session_state.stage == "result":
         ["Neutral", "Whimsical", "Romantic", "Chaotic", "Serious"]
     )
 
-    if st.button("📖 Generate Story"):
-        story = build_story(results, style, adlibs)
-        st.subheader("Your Story")
-        st.write(story)
+    if st.button("📖 A Day in the Life"):
+        #story = build_story(results, style, madlibs)
+        #st.subheader("Your Story")
+        #st.write(story)
+        st.session_state.story = build_story(results, style, madlibs)
 
-    if st.button("🖼️ Generate Image (Optional)"):
+    if st.button("🖼️ Show Me"):
         from diffusers import StableDiffusionPipeline
         import torch
 
@@ -232,9 +235,13 @@ if st.session_state.stage == "result":
             )
             pipe.to("cpu")
 
-        prompt = build_image_prompt(results, style, adlibs)
+        prompt = build_image_prompt(results, style, madlibs)
         image = pipe(prompt, num_inference_steps=20).images[0]
         st.image(image)
+
+    if st.session_state.story:
+        st.subheader("📖 A Day in the Life")
+        st.write(st.session_state.story) 
 
     if st.button("Play Again"):
         reset_game()
