@@ -191,18 +191,30 @@ NARRATIVE_STYLES = {
 
 def generate_summary(context, style):
     prompt = f"""
-Write one paragraph describing this future.
+Write a short, original story based ONLY on the facts below.
 
-Tone: {NARRATIVE_STYLES[style]}
-Rules:
-- Use ONLY the facts
-- No fantasy characters
-- No magic
+Style: {STYLE_PROMPTS[style]}
 
 Facts:
 {context}
+
+Rules:
+- One paragraph only
+- Do NOT repeat facts
+- Do NOT restate the same sentence
+- Stop after the paragraph
 """
-    return llm(prompt, max_length=180)[0]["generated_text"]
+
+    output = llm(
+        prompt,
+        max_new_tokens=120,
+        temperature=0.7,
+        repetition_penalty=1.3,
+        do_sample=True,
+        eos_token_id=llm.tokenizer.eos_token_id
+    )
+
+    return output[0]["generated_text"].replace(prompt, "").strip()
 
 # --------------------------------------------------
 # IMAGE PROMPT (SAFE)
