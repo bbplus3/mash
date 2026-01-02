@@ -4,15 +4,11 @@ os.environ["STREAMLIT_SERVER_ENABLE_FILE_WATCHER"] = "false"
 import streamlit as st
 import time, random, sqlite3
 
-# --------------------------------------------------
 # PAGE SETUP
-# --------------------------------------------------
 st.set_page_config(page_title="MASH", layout="centered")
-st.title("🏠 MASH")
+st.title("🏠 MASH-LIBS")
 
-# --------------------------------------------------
 # HELPERS
-# --------------------------------------------------
 def eliminate_to_one(options, count):
     if not options:
         return "unknown"
@@ -28,9 +24,7 @@ def reset_game():
     st.session_state.clear()
     st.rerun()
 
-# --------------------------------------------------
 # SESSION INIT
-# --------------------------------------------------
 if "stage" not in st.session_state:
     st.session_state.stage = "categories"
     st.session_state.categories = []
@@ -39,9 +33,8 @@ if "stage" not in st.session_state:
 
 if "story" not in st.session_state:
     st.session_state.story = None
-# --------------------------------------------------
+
 # STAGE 1 — CATEGORIES
-# --------------------------------------------------
 if st.session_state.stage == "categories":
     st.header("Step 1: Choose Categories")
 
@@ -56,9 +49,7 @@ if st.session_state.stage == "categories":
         st.session_state.stage = "answers"
         st.rerun()
 
-# --------------------------------------------------
 # STAGE 2 — ANSWERS
-# --------------------------------------------------
 if st.session_state.stage == "answers":
     st.header("Step 2: Enter Your Answers")
 
@@ -77,9 +68,7 @@ if st.session_state.stage == "answers":
             st.session_state.stage = "count"
             st.rerun()
 
-# --------------------------------------------------
 # STAGE 3 — COUNT
-# --------------------------------------------------
 if st.session_state.stage == "count":
     st.header("Step 3: Counting")
 
@@ -98,9 +87,7 @@ if st.session_state.stage == "count":
             st.session_state.stage = "result"
             st.rerun()
 
-# --------------------------------------------------
 # STYLE SYSTEM
-# --------------------------------------------------
 STYLE_ADJECTIVES = {
     "Neutral": {
         "House": "a",
@@ -129,9 +116,7 @@ STYLE_ADJECTIVES = {
     },
 }
 
-# --------------------------------------------------
 # STORY BUILDER
-# --------------------------------------------------
 def build_story(results, style, madlibs):
     adj = STYLE_ADJECTIVES.get(style, {})
     parts = []
@@ -140,20 +125,20 @@ def build_story(results, style, madlibs):
         return f"{adj.get(cat,'')} {val}".strip()
 
     if "House" in results and "City" in results:
-        parts.append(f"Life unfolds in {a('House', results['House'])} located in {a('City', results['City'])}.")
+        parts.append(f"Your life unfolds in {a('House', results['House'])} located in {a('City', results['City'])}.")
     elif "House" in results:
-        parts.append(f"Life unfolds in {a('House', results['House'])}.")
+        parts.append(f"Your life unfolds in {a('House', results['House'])}.")
     elif "City" in results:
-        parts.append(f"Life unfolds in {a('City', results['City'])}.")
+        parts.append(f"Your life unfolds in {a('City', results['City'])}.")
 
     if "Job" in results:
-        parts.append(f"Work centers around {a('Job', results['Job'])} career.")
+        parts.append(f"Your work centers around {a('Job', results['Job'])} career.")
 
     if "Spouse" in results:
-        parts.append(f"Life is shared with {results['Spouse']}.")
+        parts.append(f"Your life is shared with {results['Spouse']}.")
 
     if "Kids" in results:
-        parts.append(f"The household includes {results['Kids']} kids.")
+        parts.append(f"Your household includes {results['Kids']} kids.")
 
     if "Car" in results:
         parts.append(f"Daily travel happens by {results['Car']}.")
@@ -165,19 +150,21 @@ def build_story(results, style, madlibs):
 
     # Mad-lib bonuses
     if madlibs.get("trait"):
-        parts.append(f"This person is known for being {madlibs['trait']}.")
+        parts.append(f"You are known for being {madlibs['trait']}.")
     if madlibs.get("habit"):
-        parts.append(f"A defining habit involves {madlibs['habit']}.")
+        parts.append(f"A defining habit of yours involves {madlibs['habit']}.")
     if madlibs.get("twist"):
         parts.append(f"Unexpectedly, {madlibs['twist']}.")
     if madlibs.get("favorite"):
-        parts.append(f"They especially value {madlibs['favorite']}.")
+        parts.append(f"You especially value {madlibs['favorite']}.")
+    if madlibs.get("animal"):
+        parts.append(f"You are adjusting to life with a {madlibs['animal']}.")
+    if madlibs.get("number"):
+        parts.append(f"It appears you will soon have {madlibs['number']} of them!")
 
     return " ".join(parts)
 
-# --------------------------------------------------
 # IMAGE PROMPT
-# --------------------------------------------------
 def build_image_prompt(results, style, madlibs):
     core = list(results.values())
     extras = ", ".join(v for v in madlibs.values() if v)
@@ -188,9 +175,7 @@ def build_image_prompt(results, style, madlibs):
         + ", soft lighting, storybook digital art"
     )
 
-# --------------------------------------------------
 # FINAL RESULT
-# --------------------------------------------------
 if st.session_state.stage == "result":
     st.header("🎉 Your MASH Future")
 
