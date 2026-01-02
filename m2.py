@@ -213,7 +213,7 @@ if st.session_state.stage == "result":
         st.write(f"**{k}:** {v}")
 
     st.divider()
-    st.subheader(✏️ Mad-Lib Story Extras (Optional)")
+    st.subheader(Mad-Lib Story Extras (Optional)")
 
     madlibs = {
         "trait": st.text_input("Defining personality trait"),
@@ -256,3 +256,4 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
+
