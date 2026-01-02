@@ -144,51 +144,77 @@ NARRATIVE_STYLES = {
 # STORY GENERATION (DETERMINISTIC)
 # --------------------------------------------------
 def build_base_story(results):
-    """
-    Deterministically constructs a complete paragraph
-    using ALL categories with NO omissions.
-    """
-    sentences = []
+    house = results.get("House", "")
+    job = results.get("Job", "")
+    spouse = results.get("Spouse", "")
+    kids = results.get("Kids", "")
+    car = results.get("Car", "")
+    city = results.get("City", "")
 
+    parts = []
+
+    if house and city:
+        parts.append(f"Life unfolds in a {house} located in {city}.")
+    elif house:
+        parts.append(f"Life unfolds in a {house}.")
+    elif city:
+        parts.append(f"Life unfolds in {city}.")
+
+    if job:
+        parts.append(f"Work centers around a career as a {job}.")
+
+    if spouse:
+        parts.append(f"Life is shared with {spouse}.")
+
+    if kids:
+        parts.append(f"The household includes {kids} kids.")
+
+    if car:
+        parts.append(f"Daily travel happens by {car}.")
+
+    # Handle any EXTRA categories gracefully
+    handled = {"House", "Job", "Spouse", "Kids", "Car", "City"}
     for cat, val in results.items():
-        c = cat.lower()
+        if cat not in handled:
+            parts.append(f"{cat} is defined by {val}.")
 
-        if c in ["house", "home", "housing"]:
-            sentences.append(f"Life unfolds in a {val}.")
-        elif c in ["job", "career", "work"]:
-            sentences.append(f"Daily life is shaped by working as {val}.")
-        elif c in ["spouse", "partner", "relationship"]:
-            sentences.append(f"Days are shared with {val}.")
-        elif c in ["kids", "children"]:
-            sentences.append(f"The household includes {val} kids.")
-        elif c in ["car", "vehicle", "transportation"]:
-            sentences.append(f"Getting around is done using {val}.")
-        else:
-            sentences.append(f"{cat} plays a role in the future as {val}.")
+    return " ".join(parts)
 
-    return " ".join(sentences)
 
-def polish_story(story, style):
-    prompt = f"""
-Rewrite the following paragraph in a {style.lower()} tone.
-Do not add, remove, or alter facts.
-Do not repeat phrases.
-One paragraph only.
+STYLE_DECORATORS = {
+    "Neutral": "",
+    "Whimsical": " The days feel slightly magical, as if the universe is in on the joke.",
+    "Romantic": " There is a sense of warmth and connection woven through everyday moments.",
+    "Chaotic": " Nothing about this life follows a predictable pattern, and that feels exactly right.",
+    "Serious": " The life is steady, deliberate, and built on clear choices."
+}
 
-Paragraph:
-{story}
-"""
-    out = llm(prompt, max_new_tokens=160, temperature=0.5)
-    return out[0]["generated_text"].strip()
+def apply_style(story, style):
+    return story + STYLE_DECORATORS.get(style, "")
 
 # --------------------------------------------------
 # IMAGE PROMPT
 # --------------------------------------------------
 def build_image_prompt(results, style):
-    details = ", ".join(f"{k.lower()} {v}" for k, v in results.items())
+    core = []
+
+    if "House" in results:
+        core.append(results["House"])
+    if "City" in results:
+        core.append(results["City"])
+    if "Job" in results:
+        core.append(results["Job"])
+    if "Car" in results:
+        core.append(results["Car"])
+
+    extras = [f"{k.lower()} {v}" for k, v in results.items()
+              if k not in {"House", "City", "Job", "Car"}]
+
     return (
-        f"illustrated life scene, {style.lower()} tone, "
-        f"{details}, soft lighting, cinematic, digital art"
+        f"whimsical illustrated life scene, "
+        f"{style.lower()} tone, "
+        + ", ".join(core + extras)
+        + ", soft lighting, storybook style, digital art"
     )
 
 # --------------------------------------------------
