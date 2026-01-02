@@ -181,7 +181,7 @@ def retrieve_context(results):
 # --------------------------------------------------
 # NARRATIVE STYLES
 # --------------------------------------------------
-STYLE_PROMPTS = {
+NARRATIVE_STYLES = {
     "Neutral": "Objective and factual",
     "Whimsical": "Playful and imaginative",
     "Romantic": "Warm and emotional",
@@ -190,33 +190,31 @@ STYLE_PROMPTS = {
 }
 
 def generate_summary(context, style):
-    style_text = STYLE_PROMPTS.get(style, "Neutral, descriptive")
+    tone = NARRATIVE_STYLES.get(style, "Neutral, descriptive")
 
     prompt = f"""
 Write a short, original story based ONLY on the facts below.
 
-Tone: {style_text}
+Tone: {tone}
 
 Facts:
 {context}
 
 Rules:
-- One paragraph only
-- Do not repeat sentences
-- Do not list facts
+- One paragraph
+- Do NOT repeat sentences
+- Do NOT invent facts
 """
 
-    output = llm(
+    result = llm(
         prompt,
         max_new_tokens=120,
         temperature=0.7,
-        repetition_penalty=1.3,
-        do_sample=True,
-        eos_token_id=llm.tokenizer.eos_token_id
+        repetition_penalty=1.25,
+        do_sample=True
     )
 
-    return output[0]["generated_text"].replace(prompt, "").strip()
-
+    return result[0]["generated_text"].replace(prompt, "").strip()
 
 # --------------------------------------------------
 # IMAGE PROMPT (SAFE)
@@ -261,4 +259,3 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
-
