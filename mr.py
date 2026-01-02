@@ -189,32 +189,46 @@ NARRATIVE_STYLES = {
     "Serious": "Grounded and realistic"
 }
 
+# Build context deterministically
+context = "\n".join(f"{k}: {v}" for k, v in p1.items())
+
 def generate_summary(context, style):
     tone = NARRATIVE_STYLES.get(style, "Neutral, descriptive")
 
     prompt = f"""
-Write a short, original story based ONLY on the facts below.
+Write ONE coherent paragraph describing this person's future life.
 
 Tone: {tone}
 
-Facts:
+You MUST naturally include ALL of the following:
+- Housing situation
+- Job or career
+- Spouse or relationship status
+- Number of kids (or none)
+- Car or transportation
+
+Facts (use only these):
 {context}
 
 Rules:
-- One paragraph
-- Do NOT repeat sentences
-- Do NOT invent facts
+- One paragraph only
+- Do NOT repeat phrases or sentences
+- Do NOT list items
+- Do NOT explain desires or dreams
+- Do NOT omit any category
 """
 
     result = llm(
         prompt,
-        max_new_tokens=120,
-        temperature=0.7,
-        repetition_penalty=1.25,
+        max_new_tokens=140,
+        temperature=0.6,
+        repetition_penalty=1.4,
+        no_repeat_ngram_size=4,
         do_sample=True
     )
 
-    return result[0]["generated_text"].replace(prompt, "").strip()
+    text = result[0]["generated_text"]
+    return text.replace(prompt, "").strip()
 
 # --------------------------------------------------
 # IMAGE PROMPT (SAFE)
