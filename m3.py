@@ -254,13 +254,13 @@ if st.session_state.stage == "result":
         #image = pipe(prompt, num_inference_steps=20).images[0]
         #st.image(image)
 ######################
-        pipe = load_image_model()
+            pipe = load_image_model()
 
-        if pipe is None:
-            st.warning("Image generation is unavailable in this environment.")
-        else:
-            image = pipe(prompt, num_inference_steps=20).images[0]
-            st.image(image)
+            if pipe is None:
+                st.warning("Image generation is unavailable in this environment.")
+            else:
+                image = pipe(prompt, num_inference_steps=20).images[0]
+                st.image(image)
 ########################
 
     if st.session_state.story:
