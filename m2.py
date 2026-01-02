@@ -151,27 +151,61 @@ def build_story(results, style, madlibs):
     def decorate(cat, val):
         return f"{adj.get(cat,'')} {val}".strip()
 
-    for cat, val in results.items():
-        if cat == "House":
-            parts.append(f"You live in {decorate(cat, val)}.")
-        elif cat == "City":
-            parts.append(f"Life unfolds in {decorate(cat, val)}.")
-        elif cat == "Job":
-            parts.append(f"Your days revolve around working as {decorate(cat, val)}.")
-        elif cat == "Spouse":
-            parts.append(f"You share your life with {val}.")
-        elif cat == "Kids":
-            parts.append(f"Your household includes {val} kids.")
-        elif cat == "Car":
-            parts.append(f"You get around using {val}.")
+    # --- Core MASH narrative ---
+    if "House" in results:
+        parts.append(f"You live in {decorate('House', results['House'])}.")
+
+    if "City" in results:
+        parts.append(f"Life unfolds in {decorate('City', results['City'])}.")
+
+    if "Job" in results:
+        parts.append(f"Your days revolve around working as {decorate('Job', results['Job'])}.")
+
+    if "Spouse" in results:
+        parts.append(f"You share your life with {results['Spouse']}.")
+
+    if "Kids" in results:
+        parts.append(f"Your household includes {results['Kids']} kids.")
+
+    if "Car" in results:
+        parts.append(f"You get around using {results['Car']}.")
+
+    # --- Extra categories ---
+    for k, v in results.items():
+        if k not in {"House", "City", "Job", "Spouse", "Kids", "Car"}:
+            parts.append(f"{k} continues to shape your life through {v}.")
+
+    # --- STYLE-AWARE MAD-LIB INTEGRATION ---
+    if madlibs.get("trait"):
+        if style == "Chaotic":
+            parts.append(f"You are known for being unapologetically {madlibs['trait']}.")
+        elif style == "Romantic":
+            parts.append(f"At your core, you are deeply {madlibs['trait']}.")
         else:
-            parts.append(f"{cat} plays a meaningful role through {val}.")
+            parts.append(f"You are known for being {madlibs['trait']}.")
 
-    for k, v in madlibs.items():
-        if v:
-            parts.append(v.capitalize() + ".")
+    if madlibs.get("habit"):
+        parts.append(f"A recurring part of your routine involves {madlibs['habit']}.")
 
-    return " ".join(parts)
+    if madlibs.get("twist"):
+        if style == "Chaotic":
+            parts.append(f"Then, without warning, {madlibs['twist']}.")
+        else:
+            parts.append(f"Over time, {madlibs['twist']}.")
+
+    if madlibs.get("favorite"):
+        parts.append(f"You hold a particular fondness for {madlibs['favorite']}.")
+
+    if madlibs.get("animal"):
+        parts.append(f"Life is further complicated by the presence of a {madlibs['animal']}.")
+
+    if madlibs.get("number"):
+        parts.append(f"This chapter of your life seems destined to repeat itself {madlibs['number']} times.")
+
+    # --- Final polish ---
+    story = " ".join(parts)
+    return story.replace("..", ".")
+
 
 # -----------------------------
 # LLM ENHANCEMENT (OPTIONAL)
