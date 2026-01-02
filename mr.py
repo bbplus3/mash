@@ -257,7 +257,7 @@ if st.session_state.stage == "result":
     if st.button("📖 Generate Summary"):
         with st.spinner("Writing your story..."):
             context = retrieve_context(results)
-            context += "\nThis is a future outcome, not a dream or aspiration."
+            #context += "\nThis is a future outcome, not a dream or aspiration."
             summary = generate_summary(context, style)
             save_memory(results)
 
