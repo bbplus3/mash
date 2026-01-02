@@ -191,6 +191,7 @@ NARRATIVE_STYLES = {
 
 # Build context deterministically
 # context = "\n".join(f"{k}: {v}" for k, v in results.items())
+context = retrieve_context(results)
 
 def generate_summary(context, style):
     tone = NARRATIVE_STYLES.get(style, "Neutral, descriptive")
