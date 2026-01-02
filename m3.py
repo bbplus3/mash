@@ -231,7 +231,7 @@ if st.session_state.stage == "result":
             pipe = StableDiffusionPipeline.from_pretrained(
                 "runwayml/stable-diffusion-v1-5",
                 torch_dtype=torch.float32,
-                safety_checker=None
+                #safety_checker=None
             )
             pipe.to("cpu")
 
@@ -245,3 +245,4 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
+
