@@ -235,7 +235,7 @@ if st.session_state.stage == "result":
 
     if st.button("📖 Generate Summary"):
         with st.spinner("Writing your story..."):
-            base_story = build_base_story(results)
+            base_story = apply_style(results)
             summary = polish_story(base_story, style)
 
         st.subheader("Your Story")
