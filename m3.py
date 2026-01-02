@@ -195,6 +195,8 @@ if st.session_state.stage == "result":
         "habit": st.text_input("Recurring habit"),
         "twist": st.text_input("Unexpected twist"),
         "favorite": st.text_input("Favorite thing or place"),
+        "animal": st.text_input("Choose an animal"),
+        "number": st.text_input("Type any number"),
     }
 
     style = st.selectbox(
