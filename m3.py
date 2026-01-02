@@ -224,20 +224,44 @@ if st.session_state.stage == "result":
         st.session_state.story = build_story(results, style, madlibs)
 
     if st.button("🖼️ Show Me"):
-        from diffusers import StableDiffusionPipeline
-        import torch
+        #from diffusers import StableDiffusionPipeline
+        #import torch
+######################
+        def load_image_model():
+            try:
+                from diffusers import StableDiffusionPipeline
+                import torch
 
+                pipe = StableDiffusionPipeline.from_pretrained(
+                    "runwayml/stable-diffusion-v1-5",
+                    torch_dtype=torch.float32
+                )
+                pipe.to("cpu")
+                return pipe
+
+            except ModuleNotFoundError:
+                return None
+########################
         with st.spinner("Loading image model..."):
-            pipe = StableDiffusionPipeline.from_pretrained(
-                "runwayml/stable-diffusion-v1-5",
-                torch_dtype=torch.float32,
-                #safety_checker=None
-            )
-            pipe.to("cpu")
+            #pipe = StableDiffusionPipeline.from_pretrained(
+            #    "runwayml/stable-diffusion-v1-5",
+            #    torch_dtype=torch.float32,
+            #    #safety_checker=None
+            #)
+            #pipe.to("cpu")
 
-        prompt = build_image_prompt(results, style, madlibs)
-        image = pipe(prompt, num_inference_steps=20).images[0]
-        st.image(image)
+        #prompt = build_image_prompt(results, style, madlibs)
+        #image = pipe(prompt, num_inference_steps=20).images[0]
+        #st.image(image)
+######################
+        pipe = load_image_model()
+
+        if pipe is None:
+            st.warning("Image generation is unavailable in this environment.")
+        else:
+            image = pipe(prompt, num_inference_steps=20).images[0]
+            st.image(image)
+########################
 
     if st.session_state.story:
         st.subheader("📖 A Day in the Life")
@@ -245,4 +269,3 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
-
