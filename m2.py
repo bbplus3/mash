@@ -1,14 +1,20 @@
+import os
+os.environ["STREAMLIT_SERVER_ENABLE_FILE_WATCHER"] = "false"
+
 import streamlit as st
 import time
-import random
-import math
 
+# PAGE SETUP
 st.set_page_config(page_title="MASH", layout="centered")
-st.title("🏠 MASH")
+st.title("🏠 MASH-LIBS")
 
+# -----------------------------
 # HELPERS
-
+# -----------------------------
 def eliminate_to_one(options, count):
+    if not options:
+        return "unknown"
+    count = max(1, count)
     idx = 0
     opts = options.copy()
     while len(opts) > 1:
@@ -20,99 +26,70 @@ def reset_game():
     st.session_state.clear()
     st.rerun()
 
-EVIL_ANSWERS = {
-    "House": ["Living in a cave", "Abandoned mall", "Haunted shed"],
-    "Spouse": ["Marry a raccoon", "Sentient fog", "Unpaid wizard"],
-    "Kids": ["47", "0", "99"],
-    "Job": ["Unpaid wizard", "Professional toe model", "Dragon feeder"],
-    "Car": ["Rusty shopping cart", "Unicycle", "Invisible car"]
-}
-
-# SESSION STATE INIT
-
+# -----------------------------
+# SESSION INIT
+# -----------------------------
 if "stage" not in st.session_state:
     st.session_state.stage = "categories"
     st.session_state.categories = []
-    st.session_state.answers_p1 = {}
-    st.session_state.answers_ai = {}
+    st.session_state.answers = {}
     st.session_state.count = None
-    st.session_state.start_time = None
-    st.session_state.tally = 0
 
+if "story" not in st.session_state:
+    st.session_state.story = None
+
+# -----------------------------
 # STAGE 1 — CATEGORIES
-
+# -----------------------------
 if st.session_state.stage == "categories":
     st.header("Step 1: Choose Categories")
 
     cats = st.text_input(
         "Enter categories (comma-separated)",
-        "House, Spouse, Kids, Job, Car"
+        "House, Job, Spouse, Kids, Car, City"
     )
 
     if st.button("Confirm Categories"):
         st.session_state.categories = [c.strip() for c in cats.split(",")]
-        for c in st.session_state.categories:
-            st.session_state.answers_p1[c] = []
-            st.session_state.answers_ai[c] = []
+        st.session_state.answers = {c: [] for c in st.session_state.categories}
         st.session_state.stage = "answers"
         st.rerun()
 
+# -----------------------------
 # STAGE 2 — ANSWERS
-
+# -----------------------------
 if st.session_state.stage == "answers":
-    st.header("Step 2: Enter Answers")
+    st.header("Step 2: Enter Your Answers")
 
     for cat in st.session_state.categories:
         st.subheader(cat)
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.markdown("**Player 1 (2 good, 1 bad 😇)**")
-            for i in range(3):
-                v = st.text_input(f"{cat} – Option {i+1}", key=f"p1_{cat}_{i}")
-                if v and v not in st.session_state.answers_p1[cat]:
-                    st.session_state.answers_p1[cat].append(v)
-
-        with col2:
-            st.markdown("**Player 2 (AI 😈)**")
-            if len(st.session_state.answers_ai[cat]) < 3:
-                evil = EVIL_ANSWERS.get(cat, ["Chaos", "More chaos", "Ultimate chaos"])
-                choice = random.choice(evil)
-                st.session_state.answers_ai[cat].append(choice)
-            for a in st.session_state.answers_ai[cat]:
-                st.write(a)
+        for i in range(3):
+            v = st.text_input(f"{cat} – Option {i+1}", key=f"{cat}_{i}")
+            if v and v not in st.session_state.answers[cat]:
+                st.session_state.answers[cat].append(v)
 
     if st.button("Lock Answers"):
-        st.session_state.stage = "count_method"
-        st.rerun()
+        missing = [c for c, v in st.session_state.answers.items() if not v]
+        if missing:
+            st.error(f"Missing answers for: {', '.join(missing)}")
+        else:
+            st.session_state.stage = "count"
+            st.rerun()
 
-# STAGE 3 — COUNT METHOD
+# -----------------------------
+# STAGE 3 — COUNT
+# -----------------------------
+if st.session_state.stage == "count":
+    st.header("Step 3: Counting")
 
-if st.session_state.stage == "count_method":
-    st.header("Step 3: Choose Counting Method")
-
-    col1, col2 = st.columns(2)
-
-    if col1.button("📱 Touch Tally"):
-        st.session_state.stage = "tally"
+    if "tally" not in st.session_state:
+        st.session_state.tally = 0
         st.session_state.start_time = time.time()
 
-    if col2.button("🎨 Draw Swirl"):
-        st.session_state.stage = "swirl"
-        st.session_state.start_time = time.time()
-
-# TALLY MODE
-
-if st.session_state.stage == "tally":
-    st.header("📱 Touch Tally Counter")
-
-    st.write("Tap to add tally marks. Wait at least 3 seconds.")
-
-    if st.button("➕ ADD TALLY", use_container_width=True):
+    if st.button("➕ Add Tally"):
         st.session_state.tally += 1
 
     st.metric("Current Count", st.session_state.tally)
-    st.write("｜" * st.session_state.tally)
 
     if time.time() - st.session_state.start_time >= 3:
         if st.button("STOP"):
@@ -120,80 +97,162 @@ if st.session_state.stage == "tally":
             st.session_state.stage = "result"
             st.rerun()
 
-# SWIRL MODE
+# -----------------------------
+# STYLE SYSTEM
+# -----------------------------
+STYLE_ADJECTIVES = {
+    "Neutral": {},
+    "Whimsical": {
+        "House": "a delightfully impractical",
+        "Job": "an oddly charming",
+        "City": "a storybook-like",
+    },
+    "Romantic": {
+        "House": "a warm, inviting",
+        "Job": "a deeply fulfilling",
+        "City": "a quietly beautiful",
+    },
+    "Chaotic": {
+        "House": "a questionably stable",
+        "Job": "a wildly unpredictable",
+        "City": "a barely contained",
+    },
+    "Serious": {
+        "House": "a well-established",
+        "Job": "a demanding",
+        "City": "a structured",
+    },
+}
 
-if st.session_state.stage == "swirl":
-    st.header("🎨 Drawing a Swirl...")
+STYLE_MADLIB_TONE = {
+    "Neutral": lambda x: x,
+    "Whimsical": lambda x: f"delightfully {x}",
+    "Romantic": lambda x: f"deeply {x}",
+    "Chaotic": lambda x: f"alarmingly {x}",
+    "Serious": lambda x: f"notably {x}",
+}
 
-    if st.session_state.start_time is None:
-        st.session_state.start_time = time.time()
+# -----------------------------
+# STORY BUILDER
+# -----------------------------
+def build_story(results, style, madlibs):
+    adj = STYLE_ADJECTIVES.get(style, {})
+    tone = STYLE_MADLIB_TONE.get(style, lambda x: x)
+    parts = []
 
-    elapsed = time.time() - st.session_state.start_time
+    def styled(cat, val):
+        return f"{adj.get(cat,'')} {val}".strip()
 
-    st.write("Watch the swirl grow. Wait at least 3 seconds, then press STOP.")
+    if "House" in results and "City" in results:
+        parts.append(
+            f"Your life unfolds in {styled('House', results['House'])}, "
+            f"set within {styled('City', results['City'])} surroundings."
+        )
 
-    # Size grows with time
-    radius = min(10, int(elapsed * 1.5))
+    if "Job" in results:
+        parts.append(f"Your days revolve around {styled('Job', results['Job'])} work.")
 
-    swirl_lines = []
-    for y in range(-radius, radius + 1):
-        line = ""
-        for x in range(-radius * 2, radius * 2 + 1):
-            if radius > 0 and abs(math.sqrt((x / 2) ** 2 + y ** 2) - radius) < 0.6:
-                line += "●"
-            else:
-                line += " "
-        swirl_lines.append(line)
+    if "Spouse" in results:
+        parts.append(f"You share this life with {results['Spouse']}.")
 
-    st.code("\n".join(swirl_lines))
+    if "Kids" in results:
+        parts.append(f"Your household includes {results['Kids']} kids.")
 
-    if elapsed < 3:
-        st.warning("⏳ Wait at least 3 seconds before stopping")
+    if "Car" in results:
+        parts.append(f"You get around by {results['Car']}.")
 
-    if elapsed >= 3 and st.button("STOP"):
-        # Convert elapsed time to a reasonable count
-        st.session_state.count = max(3, int(elapsed * random.randint(2, 4)))
-        st.session_state.stage = "result"
-        st.rerun()
+    for k, v in results.items():
+        if k not in {"House", "City", "Job", "Spouse", "Kids", "Car"}:
+            parts.append(f"{k} plays a role through {v}.")
 
-# FINAL RESULT (RULE-CORRECT)
+    if madlibs.get("trait"):
+        parts.append(f"You are known for being {tone(madlibs['trait'])}.")
+    if madlibs.get("habit"):
+        parts.append(f"You have a habit of {tone(madlibs['habit'])}.")
+    if madlibs.get("twist"):
+        parts.append(f"Unexpectedly, {tone(madlibs['twist'])}.")
+    if madlibs.get("favorite"):
+        parts.append(f"You especially treasure {tone(madlibs['favorite'])}.")
+    if madlibs.get("animal"):
+        parts.append(f"A {tone(madlibs['animal'])} has become part of your life.")
+    if madlibs.get("number"):
+        parts.append(f"There are now {madlibs['number']} of them.")
 
+    return " ".join(parts)
+
+# -----------------------------
+# IMAGE PROMPT BUILDER
+# -----------------------------
+def build_image_prompt(results, style, madlibs):
+    core_scene = ", ".join(results.values())
+    extras = []
+
+    for v in madlibs.values():
+        if v:
+            extras.append(v)
+
+    return (
+        f"storybook illustration, {style.lower()} tone, "
+        f"{core_scene}, "
+        f"{', '.join(extras)}, "
+        "cinematic lighting, soft focus, digital art"
+    )
+
+# -----------------------------
+# FINAL RESULT
+# -----------------------------
 if st.session_state.stage == "result":
     st.header("🎉 Your MASH Future")
 
-    count = st.session_state.count
-
-    # MASH result
-    mash = eliminate_to_one(list("MASH"), count)
-
-    HOUSE_MAP = {
-        "A": "Apartment",
-        "S": "Shack",
-        "H": "House"
+    results = {
+        cat: eliminate_to_one(st.session_state.answers[cat], st.session_state.count)
+        for cat in st.session_state.categories
     }
 
-    if mash in HOUSE_MAP:
-        st.success(f"🏠 House Type: {HOUSE_MAP[mash]}")
+    for k, v in results.items():
+        st.write(f"**{k}:** {v}")
 
-    # Category results
-    for cat in st.session_state.categories:
-        options = (
-            st.session_state.answers_p1[cat]
-            + st.session_state.answers_ai[cat]
-        )
-        result = eliminate_to_one(options, count)
-        st.success(f"{cat}: {result}")
+    st.divider()
+    st.subheader(✏️ Mad-Lib Story Extras (Optional)")
 
-    # Sound effect
-    st.markdown(
-        """
-        <audio autoplay>
-            <source src="https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg" type="audio/ogg">
-        </audio>
-        """,
-        unsafe_allow_html=True
+    madlibs = {
+        "trait": st.text_input("Defining personality trait"),
+        "habit": st.text_input("Recurring habit"),
+        "twist": st.text_input("Unexpected twist"),
+        "favorite": st.text_input("Favorite thing or place"),
+        "animal": st.text_input("Choose an animal"),
+        "number": st.text_input("Type any number"),
+    }
+
+    style = st.selectbox(
+        "Narrative Style",
+        ["Neutral", "Whimsical", "Romantic", "Chaotic", "Serious"]
     )
+
+    if st.button("📖 A Day in the Life"):
+        st.session_state.story = build_story(results, style, madlibs)
+
+    if st.button("🖼️ Show Me"):
+        try:
+            from diffusers import StableDiffusionPipeline
+            import torch
+
+            with st.spinner("Generating image..."):
+                pipe = StableDiffusionPipeline.from_pretrained(
+                    "runwayml/stable-diffusion-v1-5",
+                    torch_dtype=torch.float32
+                ).to("cpu")
+
+                prompt = build_image_prompt(results, style, madlibs)
+                image = pipe(prompt, num_inference_steps=20).images[0]
+                st.image(image)
+
+        except Exception:
+            st.warning("Image generation is unavailable in this environment.")
+
+    if st.session_state.story:
+        st.subheader("📖 A Day in the Life")
+        st.write(st.session_state.story)
 
     if st.button("Play Again"):
         reset_game()
-
