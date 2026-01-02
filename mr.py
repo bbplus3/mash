@@ -181,7 +181,7 @@ def retrieve_context(results):
 # --------------------------------------------------
 # NARRATIVE STYLES
 # --------------------------------------------------
-NARRATIVE_STYLES = {
+STYLE_PROMPTS = {
     "Neutral": "Objective and factual",
     "Whimsical": "Playful and imaginative",
     "Romantic": "Warm and emotional",
@@ -261,3 +261,4 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
+
