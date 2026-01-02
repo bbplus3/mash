@@ -167,16 +167,16 @@ init_db()
 # --------------------------------------------------
 # RAG
 # --------------------------------------------------
-def retrieve_context(results):
-    texts = [f"{k}: {v}" for k, v in results.items()]
-    past = load_memory()
-    for k, v in past:
-        texts.append(f"Past {k}: {v}")
+#def retrieve_context(results):
+#    texts = [f"{k}: {v}" for k, v in results.items()]
+#    past = load_memory()
+#    for k, v in past:
+#        texts.append(f"Past {k}: {v}")
 
-    emb = embedder.encode(texts)
-    scores = np.dot(emb, emb[-1])
-    top = np.argsort(scores)[-5:]
-    return "\n".join(texts[i] for i in top)
+#    emb = embedder.encode(texts)
+#    scores = np.dot(emb, emb[-1])
+#    top = np.argsort(scores)[-5:]
+#    return "\n".join(texts[i] for i in top)
 
 # --------------------------------------------------
 # NARRATIVE STYLES
@@ -191,7 +191,6 @@ NARRATIVE_STYLES = {
 
 # Build context deterministically
 # context = "\n".join(f"{k}: {v}" for k, v in results.items())
-context = retrieve_context(results)
 
 def generate_summary(context, style):
     tone = NARRATIVE_STYLES.get(style, "Neutral, descriptive")
