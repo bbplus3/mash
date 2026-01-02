@@ -190,19 +190,20 @@ NARRATIVE_STYLES = {
 }
 
 def generate_summary(context, style):
+    style_text = STYLE_PROMPTS.get(style, "Neutral, descriptive")
+
     prompt = f"""
 Write a short, original story based ONLY on the facts below.
 
-Style: {STYLE_PROMPTS[style]}
+Tone: {style_text}
 
 Facts:
 {context}
 
 Rules:
 - One paragraph only
-- Do NOT repeat facts
-- Do NOT restate the same sentence
-- Stop after the paragraph
+- Do not repeat sentences
+- Do not list facts
 """
 
     output = llm(
@@ -215,6 +216,7 @@ Rules:
     )
 
     return output[0]["generated_text"].replace(prompt, "").strip()
+
 
 # --------------------------------------------------
 # IMAGE PROMPT (SAFE)
