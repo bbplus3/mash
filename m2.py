@@ -3,9 +3,12 @@ os.environ["STREAMLIT_SERVER_ENABLE_FILE_WATCHER"] = "false"
 
 import streamlit as st
 import time
+import random
 
+# -----------------------------
 # PAGE SETUP
-st.set_page_config(page_title="MASH", layout="centered")
+# -----------------------------
+st.set_page_config(page_title="MASH-LIBS", layout="centered")
 st.title("🏠 MASH-LIBS")
 
 # -----------------------------
@@ -34,9 +37,8 @@ if "stage" not in st.session_state:
     st.session_state.categories = []
     st.session_state.answers = {}
     st.session_state.count = None
-
-if "story" not in st.session_state:
     st.session_state.story = None
+    st.session_state.enhanced_story = None
 
 # -----------------------------
 # STAGE 1 — CATEGORIES
@@ -109,7 +111,7 @@ STYLE_ADJECTIVES = {
     },
     "Romantic": {
         "House": "a warm, inviting",
-        "Job": "a deeply fulfilling",
+        "Job": "a fulfilling",
         "City": "a quietly beautiful",
     },
     "Chaotic": {
@@ -124,78 +126,94 @@ STYLE_ADJECTIVES = {
     },
 }
 
-STYLE_MADLIB_TONE = {
-    "Neutral": lambda x: x,
-    "Whimsical": lambda x: f"delightfully {x}",
-    "Romantic": lambda x: f"deeply {x}",
-    "Chaotic": lambda x: f"alarmingly {x}",
-    "Serious": lambda x: f"notably {x}",
+# -----------------------------
+# MAD-LIB SUGGESTIONS
+# -----------------------------
+MADLIB_SUGGESTIONS = {
+    "trait": ["fearlessly optimistic", "quietly brilliant", "chaotically creative"],
+    "habit": ["journaling at night", "talking to plants", "midnight brainstorming"],
+    "twist": ["everything changes overnight", "a secret finally emerges"],
+    "favorite": ["a quiet café", "stormy afternoons", "old books"],
+    "animal": ["black cat", "golden retriever", "horse"],
+    "number": ["three", "seven", "too many"],
 }
 
+def random_madlib(key):
+    return random.choice(MADLIB_SUGGESTIONS.get(key, ["something unexpected"]))
+
 # -----------------------------
-# STORY BUILDER
+# STORY BUILDER (NON-LLM)
 # -----------------------------
 def build_story(results, style, madlibs):
     adj = STYLE_ADJECTIVES.get(style, {})
-    tone = STYLE_MADLIB_TONE.get(style, lambda x: x)
     parts = []
 
-    def styled(cat, val):
+    def decorate(cat, val):
         return f"{adj.get(cat,'')} {val}".strip()
 
-    if "House" in results and "City" in results:
-        parts.append(
-            f"Your life unfolds in {styled('House', results['House'])}, "
-            f"set within {styled('City', results['City'])} surroundings."
-        )
+    for cat, val in results.items():
+        if cat == "House":
+            parts.append(f"You live in {decorate(cat, val)}.")
+        elif cat == "City":
+            parts.append(f"Life unfolds in {decorate(cat, val)}.")
+        elif cat == "Job":
+            parts.append(f"Your days revolve around working as {decorate(cat, val)}.")
+        elif cat == "Spouse":
+            parts.append(f"You share your life with {val}.")
+        elif cat == "Kids":
+            parts.append(f"Your household includes {val} kids.")
+        elif cat == "Car":
+            parts.append(f"You get around using {val}.")
+        else:
+            parts.append(f"{cat} plays a meaningful role through {val}.")
 
-    if "Job" in results:
-        parts.append(f"Your days revolve around {styled('Job', results['Job'])} work.")
-
-    if "Spouse" in results:
-        parts.append(f"You share this life with {results['Spouse']}.")
-
-    if "Kids" in results:
-        parts.append(f"Your household includes {results['Kids']} kids.")
-
-    if "Car" in results:
-        parts.append(f"You get around by {results['Car']}.")
-
-    for k, v in results.items():
-        if k not in {"House", "City", "Job", "Spouse", "Kids", "Car"}:
-            parts.append(f"{k} plays a role through {v}.")
-
-    if madlibs.get("trait"):
-        parts.append(f"You are known for being {tone(madlibs['trait'])}.")
-    if madlibs.get("habit"):
-        parts.append(f"You have a habit of {tone(madlibs['habit'])}.")
-    if madlibs.get("twist"):
-        parts.append(f"Unexpectedly, {tone(madlibs['twist'])}.")
-    if madlibs.get("favorite"):
-        parts.append(f"You especially treasure {tone(madlibs['favorite'])}.")
-    if madlibs.get("animal"):
-        parts.append(f"A {tone(madlibs['animal'])} has become part of your life.")
-    if madlibs.get("number"):
-        parts.append(f"There are now {madlibs['number']} of them.")
+    for k, v in madlibs.items():
+        if v:
+            parts.append(v.capitalize() + ".")
 
     return " ".join(parts)
 
 # -----------------------------
-# IMAGE PROMPT BUILDER
+# LLM ENHANCEMENT (OPTIONAL)
+# -----------------------------
+def enhance_story_with_llm(base_story, style):
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+
+        prompt = f"""
+Expand the following short life story into a vivid, engaging narrative.
+Maintain a {style.lower()} tone.
+Do not repeat sentences or contradict facts.
+
+Story:
+{base_story}
+"""
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.8,
+        )
+
+        return response.choices[0].message.content.strip()
+
+    except Exception:
+        return None
+
+# -----------------------------
+# IMAGE PROMPT
 # -----------------------------
 def build_image_prompt(results, style, madlibs):
-    core_scene = ", ".join(results.values())
-    extras = []
-
-    for v in madlibs.values():
-        if v:
-            extras.append(v)
-
+    core = ", ".join(results.values())
+    extras = ", ".join(v for v in madlibs.values() if v)
     return (
-        f"storybook illustration, {style.lower()} tone, "
-        f"{core_scene}, "
-        f"{', '.join(extras)}, "
-        "cinematic lighting, soft focus, digital art"
+        f"illustrated life scene, {style.lower()} tone, "
+        f"{core}, {extras}, soft lighting, storybook digital art"
     )
 
 # -----------------------------
@@ -213,26 +231,41 @@ if st.session_state.stage == "result":
         st.write(f"**{k}:** {v}")
 
     st.divider()
-    st.subheader("Mad-Lib Story Extras (Optional)")
+    st.subheader("Mad-Lib Extras")
 
-    madlibs = {
-        "trait": st.text_input("Defining personality trait"),
-        "habit": st.text_input("Recurring habit"),
-        "twist": st.text_input("Unexpected twist"),
-        "favorite": st.text_input("Favorite thing or place"),
-        "animal": st.text_input("Choose an animal"),
-        "number": st.text_input("Type any number"),
-    }
+    madlibs = {}
+    for key in MADLIB_SUGGESTIONS:
+        col1, col2 = st.columns([4, 1])
+        with col1:
+            madlibs[key] = st.text_input(key.capitalize(), key=f"ml_{key}")
+        with col2:
+            if st.button("🎲", key=f"rand_{key}"):
+                st.session_state[f"ml_{key}"] = random_madlib(key)
+                st.rerun()
 
     style = st.selectbox(
         "Narrative Style",
         ["Neutral", "Whimsical", "Romantic", "Chaotic", "Serious"]
     )
 
-    if st.button("📖 A Day in the Life"):
+    if st.button("📖 Generate Story"):
         st.session_state.story = build_story(results, style, madlibs)
+        st.session_state.enhanced_story = None
 
-    if st.button("🖼️ Show Me"):
+    if st.session_state.story:
+        st.subheader("📖 A Day in the Life")
+        st.write(st.session_state.story)
+
+        if st.button("✨ Expand with AI"):
+            enhanced = enhance_story_with_llm(st.session_state.story, style)
+            if enhanced:
+                st.session_state.enhanced_story = enhanced
+
+    if st.session_state.enhanced_story:
+        st.subheader("✨ Expanded Future")
+        st.write(st.session_state.enhanced_story)
+
+    if st.button("🖼️ Generate Image"):
         try:
             from diffusers import StableDiffusionPipeline
             import torch
@@ -241,20 +274,15 @@ if st.session_state.stage == "result":
                 pipe = StableDiffusionPipeline.from_pretrained(
                     "runwayml/stable-diffusion-v1-5",
                     torch_dtype=torch.float32
-                ).to("cpu")
+                )
+                pipe.to("cpu")
 
                 prompt = build_image_prompt(results, style, madlibs)
                 image = pipe(prompt, num_inference_steps=20).images[0]
                 st.image(image)
 
         except Exception:
-            st.warning("Image generation is unavailable in this environment.")
-
-    if st.session_state.story:
-        st.subheader("📖 A Day in the Life")
-        st.write(st.session_state.story)
+            st.warning("Image generation unavailable.")
 
     if st.button("Play Again"):
         reset_game()
-
-
