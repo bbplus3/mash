@@ -214,16 +214,21 @@ def build_story(results, style, madlibs):
 def enhance_story_with_llm(base_story, style):
     api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
+        st.error("❌ OPENAI_API_KEY not found in environment.")
         return None
 
     try:
-        from openai import OpenAI
         client = OpenAI(api_key=api_key)
 
         prompt = f"""
 Expand the following short life story into a vivid, engaging narrative.
-Maintain a {style.lower()} tone.
-Do not repeat sentences or contradict facts.
+
+Tone: {style}
+Rules:
+- One paragraph
+- No repetition
+- Do not contradict facts
+- Do not add new facts
 
 Story:
 {base_story}
@@ -232,13 +237,17 @@ Story:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
-            temperature=0.8,
+            max_tokens=220,
+            temperature=0.75,
         )
 
         return response.choices[0].message.content.strip()
 
-    except Exception:
+    except Exception as e:
+        st.error("OpenAI error:")
+        st.code(str(e))
         return None
+
 
 # -----------------------------
 # IMAGE PROMPT
@@ -292,9 +301,15 @@ if st.session_state.stage == "result":
         st.write(st.session_state.story)
 
         if st.button("✨ Expand with AI"):
-            enhanced = enhance_story_with_llm(st.session_state.story, style)
-            if enhanced:
-                st.session_state.enhanced_story = enhanced
+            with st.spinner("Expanding your future..."):
+                enhanced = enhance_story_with_llm(
+                    st.session_state.story,
+                    style
+                )
+                if enhanced:
+                    st.session_state.enhanced_story = enhanced
+                else:
+                    st.warning("AI expansion failed.")
 
     if st.session_state.enhanced_story:
         st.subheader("✨ Expanded Future")
