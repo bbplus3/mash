@@ -1,3 +1,4 @@
+from openai import OpenAI
 import os
 os.environ["STREAMLIT_SERVER_ENABLE_FILE_WATCHER"] = "false"
 
