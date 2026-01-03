@@ -1,4 +1,3 @@
-from openai import OpenAI
 import os
 os.environ["STREAMLIT_SERVER_ENABLE_FILE_WATCHER"] = "false"
 
@@ -336,3 +335,4 @@ if st.session_state.stage == "result":
 
     if st.button("Play Again"):
         reset_game()
+
