@@ -236,6 +236,58 @@ def kids_phrase(value):
         return "one kid"
     return f"{n} kids"
 
+def pet_future_phrase(animal, number, style):
+    n = normalize_int(number)
+
+    if not animal:
+        return None
+
+    # Unknown or invalid number
+    if n is None:
+        return f"A {animal} enters your life and leaves a lasting impression."
+
+    # Zero pets
+    if n == 0:
+        if style == "Chaotic":
+            return f"You briefly consider getting a {animal}, but chaos intervenes."
+        return f"For now, life continues without a pet."
+
+    # One pet
+    if n == 1:
+        if style == "Romantic":
+            return f"A single {animal} becomes a beloved companion."
+        if style == "Chaotic":
+            return f"One {animal} appears and immediately causes trouble."
+        return f"A {animal} soon becomes part of your household."
+
+    # Multiple pets
+    pet_word = pluralize(animal, n)
+
+    if style == "Whimsical":
+        return f"You somehow end up caring for {n} {pet_word}, each with a personality of their own."
+    if style == "Chaotic":
+        return f"{n} {pet_word} take over your life in the most unpredictable way."
+    if style == "Serious":
+        return f"You take on responsibility for {n} {pet_word}, adjusting your routine accordingly."
+
+    return f"You soon find yourself living alongside {n} {pet_word}."
+
+
+# GRAMMAR HELPERS
+def normalize_int(value):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+def pluralize(word, n):
+    if n == 1:
+        return word
+    if word.endswith("y"):
+        return word[:-1] + "ies"
+    return word + "s"
+
+
 # NARRATIVE ARC TEMPLATES
 ARC_TEMPLATES = {
     "rise": {
@@ -366,13 +418,15 @@ def build_story(results, style, madlibs):
     if madlibs.get("favorite"):
         story.append(f"You hold a lasting fondness for {madlibs['favorite']}.")
 
-    if madlibs.get("animal"):
-        story.append(f"A {madlibs['animal']} plays an unexpected role in your life.")
+    pet_line = pet_future_phrase(
+        madlibs.get("animal"),
+        madlibs.get("number"),
+        style
+    )
 
-    if madlibs.get("number"):
-        story.append(
-            f"This chapter of your life seems destined to repeat itself {madlibs['number']} times."
-        )
+    if pet_line:
+        parts.append(pet_line)
+
 
     return " ".join(story).replace("..", ".")
 
