@@ -143,54 +143,238 @@ def random_madlib(key):
 # -----------------------------
 # STORY BUILDER (LOCAL)
 # -----------------------------
+INTRO_TEMPLATES = {
+    "Neutral": [
+        "Your life takes shape in {House}, setting the tone for everything that follows.",
+        "You find yourself living in {House}, a place that quietly defines your days."
+    ],
+    "Whimsical": [
+        "Somehow, you end up in {House}, and honestly, it feels exactly right.",
+        "Against all odds, your story begins in {House}."
+    ],
+    "Romantic": [
+        "Your story unfolds gently in {House}, where comfort and meaning intertwine.",
+        "You build your life within {House}, a place filled with promise."
+    ],
+    "Chaotic": [
+        "Nothing makes sense, yet there you are in {House}.",
+        "Your life launches straight into madness from {House}."
+    ],
+    "Serious": [
+        "Your life is firmly established in {House}.",
+        "Everything begins with {House}, chosen with purpose."
+    ],
+}
+
+WORK_TEMPLATES = {
+    "default": [
+        "Your days are shaped by working as {Job}.",
+        "Much of your time is devoted to your work as {Job}."
+    ]
+}
+
+RELATIONSHIP_TEMPLATES = {
+    "spouse": [
+        "You share your life with {Spouse}.",
+        "{Spouse} stands beside you through it all."
+    ],
+    "kids_none": [
+        "The household remains quiet, without children.",
+        "It’s a life without kids, leaving room for other pursuits."
+    ],
+    "kids_some": [
+        "Together, you raise {Kids} kids.",
+        "Life stays busy with {Kids} kids in the mix."
+    ]
+}
+
+CLOSING_TEMPLATES = {
+    "Neutral": [
+        "Altogether, this is the rhythm of your life.",
+        "This is how your days ultimately unfold."
+    ],
+    "Whimsical": [
+        "Strangely enough, it all works out.",
+        "And somehow, it feels like exactly the right story."
+    ],
+    "Romantic": [
+        "It’s a life rich with meaning and quiet joy.",
+        "In the end, it feels deeply fulfilling."
+    ],
+    "Chaotic": [
+        "Somehow, you survive it all.",
+        "Whether it makes sense or not, this is your life."
+    ],
+    "Serious": [
+        "It is a life built with intention.",
+        "Everything follows a deliberate path."
+    ],
+}
+
+def choose(template_list):
+    return random.choice(template_list)
+
+# STORY HELPER FUNCTIONS
+def normalize_int(value):
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return None
+
+def pluralize(word, count):
+    if count == 1:
+        return word
+    return word + "s"
+
+def kids_phrase(value):
+    n = normalize_int(value)
+    if n is None:
+        return f"{value} kids"
+    if n == 0:
+        return "no kids"
+    if n == 1:
+        return "one kid"
+    return f"{n} kids"
+
+# NARRATIVE ARC TEMPLATES
+ARC_TEMPLATES = {
+    "rise": {
+        "Neutral": [
+            "At first, everything feels steady and predictable.",
+            "Early on, life seems to settle into a comfortable rhythm."
+        ],
+        "Whimsical": [
+            "At the beginning, everything feels oddly delightful.",
+            "Early on, life feels like it’s humming along just fine."
+        ],
+        "Romantic": [
+            "At first, life feels full of promise.",
+            "In the beginning, everything feels gently aligned."
+        ],
+        "Chaotic": [
+            "At first, things seem manageable—somehow.",
+            "Early on, the chaos hasn’t fully revealed itself."
+        ],
+        "Serious": [
+            "At the outset, everything appears well planned.",
+            "In the beginning, the structure holds firm."
+        ],
+    },
+    "conflict": {
+        "Neutral": [
+            "Over time, challenges begin to surface.",
+            "Eventually, complications make themselves known."
+        ],
+        "Whimsical": [
+            "Eventually, things get a little strange.",
+            "Before long, reality throws in a curveball."
+        ],
+        "Romantic": [
+            "In time, difficulties test this carefully built life.",
+            "Eventually, not everything goes as smoothly as hoped."
+        ],
+        "Chaotic": [
+            "Then things spiral—fast.",
+            "Suddenly, nothing goes according to plan."
+        ],
+        "Serious": [
+            "Inevitably, pressure begins to build.",
+            "Over time, the cracks start to show."
+        ],
+    },
+    "resolution": {
+        "Neutral": [
+            "In the end, you adapt and move forward.",
+            "Ultimately, you find a way to make it work."
+        ],
+        "Whimsical": [
+            "Somehow, it all comes together.",
+            "Against all odds, things land on their feet."
+        ],
+        "Romantic": [
+            "In the end, meaning emerges from it all.",
+            "Ultimately, love and purpose prevail."
+        ],
+        "Chaotic": [
+            "Somehow, you survive the madness.",
+            "Whether it makes sense or not, this becomes your life."
+        ],
+        "Serious": [
+            "In the end, stability is restored.",
+            "Ultimately, discipline and resolve carry you through."
+        ],
+    }
+}
+
+
+def choose(options):
+    return random.choice(options)
+
 def build_story(results, style, madlibs):
     adj = STYLE_ADJECTIVES.get(style, {})
-    parts = []
+    story = []
 
-    def decorate(cat, val):
-        return f"{adj.get(cat,'')} {val}".strip()
+    def decorate(cat):
+        return f"{adj.get(cat, '')} {results[cat]}".strip()
+
+    # =====================
+    # RISE — Setup
+    # =====================
+    story.append(choose(ARC_TEMPLATES["rise"][style]))
 
     if "House" in results:
-        parts.append(f"You live in {decorate('House', results['House'])}.")
+        story.append(f"You live in {decorate('House')}.")
 
     if "City" in results:
-        parts.append(f"Life unfolds in {decorate('City', results['City'])}.")
+        story.append(f"Much of your life unfolds in {decorate('City')}.")
 
     if "Job" in results:
-        parts.append(f"Your days revolve around working as {decorate('Job', results['Job'])}.")
+        story.append(f"Your days revolve around working as {decorate('Job')}.")
+
+    # =====================
+    # CONFLICT — Tension
+    # =====================
+    story.append(choose(ARC_TEMPLATES["conflict"][style]))
 
     if "Spouse" in results:
-        parts.append(f"You share your life with {results['Spouse']}.")
+        story.append(f"You share this life with {results['Spouse']}.")
 
     if "Kids" in results:
-        parts.append(f"Your household includes {results['Kids']} kids.")
-
-    if "Car" in results:
-        parts.append(f"You get around using {results['Car']}.")
-
-    for k, v in results.items():
-        if k not in {"House", "City", "Job", "Spouse", "Kids", "Car"}:
-            parts.append(f"{k} continues to shape your life through {v}.")
-
-    if madlibs.get("trait"):
-        parts.append(f"You are known for being {madlibs['trait']}.")
-
-    if madlibs.get("habit"):
-        parts.append(f"A recurring part of your routine involves {madlibs['habit']}.")
+        phrase = kids_phrase(results["Kids"])
+        story.append(f"Your household includes {phrase}.")
 
     if madlibs.get("twist"):
-        parts.append(f"Over time, {madlibs['twist']}.")
+        if style == "Chaotic":
+            story.append(f"Without warning, {madlibs['twist']}.")
+        else:
+            story.append(f"Over time, {madlibs['twist']}.")
+
+    # =====================
+    # RESOLUTION — Meaning
+    # =====================
+    story.append(choose(ARC_TEMPLATES["resolution"][style]))
+
+    if "Car" in results:
+        story.append(f"You get around using {results['Car']}.")
+
+    if madlibs.get("trait"):
+        story.append(f"You are known for being {madlibs['trait']}.")
+
+    if madlibs.get("habit"):
+        story.append(f"A familiar habit of yours is {madlibs['habit']}.")
 
     if madlibs.get("favorite"):
-        parts.append(f"You hold a particular fondness for {madlibs['favorite']}.")
+        story.append(f"You hold a lasting fondness for {madlibs['favorite']}.")
 
     if madlibs.get("animal"):
-        parts.append(f"Life is further complicated by the presence of a {madlibs['animal']}.")
+        story.append(f"A {madlibs['animal']} plays an unexpected role in your life.")
 
     if madlibs.get("number"):
-        parts.append(f"This chapter of your life seems destined to repeat itself {madlibs['number']} times.")
+        story.append(
+            f"This chapter of your life seems destined to repeat itself {madlibs['number']} times."
+        )
 
-    return " ".join(parts).replace("..", ".")
+    return " ".join(story).replace("..", ".")
 
 # -----------------------------
 # IMAGE PROMPT
