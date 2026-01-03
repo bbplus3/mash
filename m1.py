@@ -425,7 +425,7 @@ def build_story(results, style, madlibs):
     )
 
     if pet_line:
-        parts.append(pet_line)
+        story.append(pet_line)
 
 
     return " ".join(story).replace("..", ".")
