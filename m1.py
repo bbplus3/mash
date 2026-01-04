@@ -46,13 +46,36 @@ body {
     color: #2f2f2f;
 }
 
-/* Results grid */
-.result-grid {
-    background: #faf7f1;
-    border-left: 6px solid #c2a76d;
-    padding: 0.75rem 1rem;
-    border-radius: 10px;
+/* Card layout */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 0.5rem;
 }
+
+.result-card {
+    background: #faf7f1;
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+    border-left: 5px solid #c2a76d;
+}
+
+.card-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #8b6f47;
+    margin-bottom: 0.2rem;
+}
+
+.card-value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #2f2f2f;
+}
+
 
 /* Buttons */
 button {
@@ -513,11 +536,21 @@ if st.session_state.stage == "result":
     }
 
     with st.container():
-        st.markdown('<div class="result-grid">', unsafe_allow_html=True)
-        cols = st.columns(2)
-        for i, (k, v) in enumerate(results.items()):
-            cols[i % 2].markdown(f"**{k}** → *{v}*")
+        st.markdown('<div class="card-grid">', unsafe_allow_html=True)
+
+        for k, v in results.items():
+            st.markdown(
+                f"""
+                <div class="result-card">
+                    <div class="card-label">{k}</div>
+                    <div class="card-value">{v}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
         st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 
