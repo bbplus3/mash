@@ -10,6 +10,62 @@ import random
 # -----------------------------
 st.set_page_config(page_title="MASH-LIBS", layout="centered")
 st.title("🏠 MASH-LIBS")
+st.markdown("""
+<style>
+
+/* Page background */
+body {
+    background-color: #f7f3ea;
+}
+
+/* Main book container */
+.book {
+    background: #fffdf8;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+}
+
+/* Chapter headers */
+.chapter {
+    font-family: "Georgia", serif;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    color: #8b6f47;
+    margin-bottom: 0.3rem;
+}
+
+/* Story text */
+.story-text {
+    font-family: "Georgia", serif;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #2f2f2f;
+}
+
+/* Results grid */
+.result-grid {
+    background: #faf7f1;
+    border-left: 6px solid #c2a76d;
+    padding: 1rem;
+    border-radius: 10px;
+}
+
+/* Buttons */
+button {
+    border-radius: 8px !important;
+}
+
+/* Image frame */
+.illustration {
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+</style>
+""", unsafe_allow_html=True)
 
 # -----------------------------
 # HELPERS
@@ -445,15 +501,22 @@ def build_image_prompt(results, style, madlibs):
 # FINAL RESULT
 # -----------------------------
 if st.session_state.stage == "result":
-    st.header("🎉 Your MASH Future")
+    st.markdown('<div class="book">', unsafe_allow_html=True)
+    st.markdown('<div class="chapter">Chapter I</div>', unsafe_allow_html=True)
+    st.header("Your MASH Future")
+
 
     results = {
         cat: eliminate_to_one(st.session_state.answers[cat], st.session_state.count)
         for cat in st.session_state.categories
     }
 
-    for k, v in results.items():
-        st.write(f"**{k}:** {v}")
+    st.markdown('<div class="result-grid">', unsafe_allow_html=True)
+    cols = st.columns(2)
+    for i, (k, v) in enumerate(results.items()):
+        cols[i % 2].markdown(f"**{k}** → *{v}*")
+    st.markdown('</div>', unsafe_allow_html=True)
+
 
     st.divider()
     st.subheader("Mad-Lib Extras")
@@ -477,8 +540,14 @@ if st.session_state.stage == "result":
         st.session_state.story = build_story(results, style, madlibs)
 
     if st.session_state.story:
-        st.subheader("📖 A Day in the Life")
-        st.write(st.session_state.story)
+        st.markdown('<div class="chapter">Chapter II</div>', unsafe_allow_html=True)
+        st.subheader("A Day in the Life")
+
+        st.markdown(
+            f'<div class="story-text">{st.session_state.story}</div>',
+            unsafe_allow_html=True
+        )
+
 
     if st.button("🖼️ Generate Image"):
         try:
@@ -494,10 +563,12 @@ if st.session_state.stage == "result":
 
                 prompt = build_image_prompt(results, style, madlibs)
                 image = pipe(prompt, num_inference_steps=20).images[0]
-                st.image(image)
+                st.markdown('<div class="chapter">Illustration</div>', unsafe_allow_html=True)
+                st.image(image, use_container_width=True, output_format="PNG")
 
         except Exception:
             st.warning("Image generation unavailable.")
 
+    st.markdown('</div>', unsafe_allow_html=True)
     if st.button("Play Again"):
         reset_game()
