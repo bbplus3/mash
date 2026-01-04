@@ -8,111 +8,16 @@ import random
 # -----------------------------
 # PAGE SETUP
 # -----------------------------
-st.set_page_config(page_title="MASH-LIBS", layout="centered")
-
+st.set_page_config(page_title="MASH", layout="centered")
 st.title("🏠 MASH-LIBS")
-st.caption("A quiet glimpse into your future")
-
-st.markdown("""
-<style>
-
-/* Background */
-body {
-    background-color: #f7f3ea;
-}
-
-/* Page animation */
-.page {
-    animation: fadeIn 0.45s ease both;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-/* Book container */
-.book {
-    background: #fffdf8;
-    padding: 1.75rem 2rem;
-    border-radius: 18px;
-    box-shadow: 0 14px 32px rgba(0,0,0,0.08);
-    margin-bottom: 2rem;
-}
-
-/* Chapter labels */
-.chapter {
-    font-family: "Georgia", serif;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    color: #8b6f47;
-    margin-bottom: 0.25rem;
-}
-
-/* Story text */
-.story-text {
-    font-family: "Georgia", serif;
-    font-size: 1.05rem;
-    line-height: 1.7;
-    color: #2f2f2f;
-    margin-bottom: 0.6rem;
-}
-
-/* Cards */
-.card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
-}
-
-.result-card {
-    background: #faf7f1;
-    border-radius: 14px;
-    padding: 1rem 1.25rem;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
-    border-left: 5px solid #c2a76d;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.result-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-}
-
-.card-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    color: #8b6f47;
-}
-
-.card-value {
-    font-size: 1.05rem;
-    font-weight: 600;
-}
-
-/* Dice */
-.dice {
-    font-size: 3rem;
-    text-align: center;
-}
-
-/* Footer */
-.footer {
-    text-align: center;
-    font-size: 0.75rem;
-    color: #8b6f47;
-    margin-top: 2rem;
-}
-
-</style>
-""", unsafe_allow_html=True)
 
 # -----------------------------
 # HELPERS
 # -----------------------------
 def eliminate_to_one(options, count):
+    if not options:
+        return "unknown"
+    count = max(1, count)
     idx = 0
     opts = options.copy()
     while len(opts) > 1:
@@ -133,118 +38,224 @@ if "stage" not in st.session_state:
     st.session_state.answers = {}
     st.session_state.count = None
     st.session_state.story = None
+    st.session_state.expanded_story = None
 
 # -----------------------------
-# PROLOGUE — CATEGORIES
+# STAGE 1 — CATEGORIES
 # -----------------------------
 if st.session_state.stage == "categories":
-    st.markdown('<div class="page book">', unsafe_allow_html=True)
-    st.markdown('<div class="chapter">Prologue</div>', unsafe_allow_html=True)
-    st.subheader("Choose the pieces of your future")
+    st.header("Step 1: Choose Categories")
 
     cats = st.text_input(
-        "Separate them with commas",
+        "Enter categories (comma-separated)",
         "House, Job, Spouse, Kids, Car, City"
     )
 
-    if st.button("✨ Begin Your Story"):
+    if st.button("Confirm Categories"):
         st.session_state.categories = [c.strip() for c in cats.split(",")]
         st.session_state.answers = {c: [] for c in st.session_state.categories}
         st.session_state.stage = "answers"
         st.rerun()
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # -----------------------------
-# CHAPTER I — ANSWERS
+# STAGE 2 — ANSWERS
 # -----------------------------
 if st.session_state.stage == "answers":
-    st.markdown('<div class="page book">', unsafe_allow_html=True)
-    st.markdown('<div class="chapter">Chapter I</div>', unsafe_allow_html=True)
-    st.subheader("Fill the possibilities")
+    st.header("Step 2: Enter Your Answers")
 
     for cat in st.session_state.categories:
-        st.markdown(f"**{cat}**")
+        st.subheader(cat)
         for i in range(3):
-            v = st.text_input(f"Option {i+1}", key=f"{cat}_{i}")
+            v = st.text_input(f"{cat} – Option {i+1}", key=f"{cat}_{i}")
             if v and v not in st.session_state.answers[cat]:
                 st.session_state.answers[cat].append(v)
 
-    if st.button("📜 Seal Your Fate"):
-        st.session_state.stage = "count"
-        st.rerun()
-
-    st.markdown('</div>', unsafe_allow_html=True)
+    if st.button("Lock Answers"):
+        missing = [c for c, v in st.session_state.answers.items() if not v]
+        if missing:
+            st.error(f"Missing answers for: {', '.join(missing)}")
+        else:
+            st.session_state.stage = "count"
+            st.rerun()
 
 # -----------------------------
-# CHAPTER II — DICE COUNT
+# STAGE 3 — COUNT
 # -----------------------------
 if st.session_state.stage == "count":
-    st.markdown('<div class="page book">', unsafe_allow_html=True)
-    st.markdown('<div class="chapter">Chapter II</div>', unsafe_allow_html=True)
-    st.subheader("Let chance decide")
+    st.header("Step 3: Counting")
 
-    st.caption("Watch the die roll… when it feels right, let fate stop it.")
+    if "tally" not in st.session_state:
+        st.session_state.tally = 0
+        st.session_state.start_time = time.time()
 
-    if "rolling" not in st.session_state:
-        st.session_state.rolling = True
-        st.session_state.start = time.time()
+    if st.button("➕ Add Tally"):
+        st.session_state.tally += 1
 
-    dice = random.randint(1, 6)
-    st.markdown(f'<div class="dice">🎲 {dice}</div>', unsafe_allow_html=True)
+    st.metric("Current Count", st.session_state.tally)
 
-    if st.button("🕯️ Let Fate Decide"):
-        st.session_state.count = dice
-        st.session_state.stage = "result"
-        st.rerun()
-
-    time.sleep(0.4)
-    st.rerun()
+    if time.time() - st.session_state.start_time >= 3:
+        if st.button("STOP"):
+            st.session_state.count = max(1, st.session_state.tally)
+            st.session_state.stage = "result"
+            st.rerun()
 
 # -----------------------------
-# FINAL — STORY
+# STYLE SYSTEM
+# -----------------------------
+STYLE_DESCRIPTORS = {
+    "Neutral": "gentle and grounded",
+    "Whimsical": "lighthearted and storybook-like",
+    "Romantic": "warm, reflective, and emotional",
+    "Chaotic": "energetic, unpredictable, and playful",
+    "Serious": "measured, thoughtful, and calm",
+}
+
+# -----------------------------
+# STORY OUTLINE (DETERMINISTIC)
+# -----------------------------
+def build_story_outline(results, madlibs):
+    animal = madlibs.get("animal")
+    number = madlibs.get("number")
+
+    outline = {}
+
+    outline["opening"] = (
+        f"Your life unfolds in a {results.get('House','home')} "
+        f"located in {results.get('City','a place')}. "
+        f"You are known for being {madlibs.get('trait','yourself')}."
+    )
+
+    outline["routine"] = (
+        f"Your days are shaped by working as {results.get('Job','something')} "
+        f"and sharing life with {results.get('Spouse','someone')}. "
+        f"A familiar part of your routine includes {madlibs.get('habit','simple comforts')}."
+    )
+
+    outline["conflict"] = (
+        f"Life doesn’t stay predictable for long, when "
+        f"{madlibs.get('twist','something unexpected happens')}."
+    )
+
+    if animal and number:
+        outline["growth"] = (
+            f"During this time, you find yourself caring for {number} {animal}"
+            f"{'' if str(number)=='1' else 's'}, adjusting to the added responsibility."
+        )
+    else:
+        outline["growth"] = (
+            f"You slowly adapt, learning how to balance change with stability."
+        )
+
+    outline["resolution"] = (
+        f"Eventually, things settle. With {results.get('Kids','no')} kids, "
+        f"daily life moves forward, often traveling by {results.get('Car','your own means')}, "
+        f"and finding comfort in {madlibs.get('favorite','the small things')}."
+    )
+
+    return outline
+
+# -----------------------------
+# FALLBACK STORY (NO LLM)
+# -----------------------------
+def build_fallback_story(outline):
+    return "\n\n".join(outline.values())
+
+# -----------------------------
+# LLM EXPANSION (OPTIONAL)
+# -----------------------------
+def expand_with_llm(outline, style, results):
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        return None
+
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=api_key)
+
+        expanded_sections = []
+
+        facts = "\n".join([f"{k}: {v}" for k, v in results.items()])
+
+        for section in outline.values():
+            prompt = f"""
+You are expanding a cozy life story.
+
+Rules:
+- Do NOT add or change facts
+- Do NOT repeat phrases
+- Write 2–3 sentences
+- Third-person perspective
+- Tone: {STYLE_DESCRIPTORS.get(style)}
+
+Facts:
+{facts}
+
+Base text:
+{section}
+
+Expand gently.
+"""
+
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=150,
+                temperature=0.65,
+            )
+
+            expanded_sections.append(
+                response.choices[0].message.content.strip()
+            )
+
+        return "\n\n".join(expanded_sections)
+
+    except Exception:
+        return None
+
+# -----------------------------
+# FINAL RESULT
 # -----------------------------
 if st.session_state.stage == "result":
-    st.markdown('<div class="page book">', unsafe_allow_html=True)
-    st.markdown('<div class="chapter">Chapter III</div>', unsafe_allow_html=True)
-    st.subheader("Your MASH Future")
+    st.header("🎉 Your MASH Future")
 
     results = {
         cat: eliminate_to_one(st.session_state.answers[cat], st.session_state.count)
         for cat in st.session_state.categories
     }
 
-    st.markdown('<div class="card-grid">', unsafe_allow_html=True)
     for k, v in results.items():
-        st.markdown(f"""
-        <div class="result-card">
-            <div class="card-label">{k}</div>
-            <div class="card-value">{v}</div>
-        </div>
-        """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.write(f"**{k}:** {v}")
 
-    if st.button("📖 Turn the Page"):
-        story = " ".join([
-            "At first, life settles gently into place.",
-            f"You live in {results.get('House','somewhere')}.",
-            f"You work as {results.get('Job','something')}.",
-            "In time, things grow complicated.",
-            "Eventually, you find your balance again."
-        ])
-        st.session_state.story = story
+    st.divider()
+    st.subheader("Story Extras")
 
-    if st.session_state.story:
-        st.markdown('<div class="chapter">Chapter IV</div>', unsafe_allow_html=True)
-        st.subheader("A Day in the Life")
+    madlibs = {
+        "trait": st.text_input("Defining personality trait"),
+        "habit": st.text_input("Recurring habit"),
+        "twist": st.text_input("Unexpected twist"),
+        "favorite": st.text_input("Favorite thing or place"),
+        "animal": st.text_input("Pet animal"),
+        "number": st.text_input("How many of them"),
+    }
 
-        for sentence in st.session_state.story.split(". "):
-            st.markdown(f'<div class="story-text">{sentence}.</div>', unsafe_allow_html=True)
-            time.sleep(0.15)
+    style = st.selectbox(
+        "Narrative Style",
+        list(STYLE_DESCRIPTORS.keys())
+    )
 
-    st.markdown('<div class="footer">☕ Take your time. Futures are fragile things.</div>', unsafe_allow_html=True)
+    if st.button("📖 Tell My Story"):
+        outline = build_story_outline(results, madlibs)
+        st.session_state.story = build_fallback_story(outline)
 
-    if st.button("🔁 Start a New Life"):
+        expanded = expand_with_llm(outline, style, results)
+        st.session_state.expanded_story = expanded
+
+    if st.session_state.expanded_story:
+        st.subheader("📖 A Day in the Life")
+        st.write(st.session_state.expanded_story)
+    elif st.session_state.story:
+        st.subheader("📖 A Day in the Life")
+        st.write(st.session_state.story)
+
+    if st.button("Play Again"):
         reset_game()
-
-    st.markdown('</div>', unsafe_allow_html=True)
