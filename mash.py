@@ -164,8 +164,7 @@ def build_story_outline(results, madlibs):
 # FALLBACK STORY (NO LLM)
 # -----------------------------
 def build_fallback_story(outline):
-    #return "\n\n".join(outline.values())
-    return "\n\n".join(outline)
+    return "\n\n".join(outline.values())
 
 # -----------------------------
 # LLM EXPANSION (OPTIONAL)
