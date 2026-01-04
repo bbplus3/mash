@@ -114,45 +114,51 @@ STYLE_DESCRIPTORS = {
 # STORY OUTLINE (DETERMINISTIC)
 # -----------------------------
 def build_story_outline(results, madlibs):
-    animal = madlibs.get("animal")
-    number = madlibs.get("number")
+    return [
+        {
+            "role": "setting",
+            "text": (
+                f"Their life takes shape in a {results.get('House','home')} "
+                f"in {results.get('City','a quiet place')}."
+            )
+        },
+        {
+            "role": "identity",
+            "text": (
+                f"They are known for being {madlibs.get('trait','steadfast')}, "
+                f"balancing work as a {results.get('Job','professional')} "
+                f"with a full home life."
+            )
+        },
+        {
+            "role": "relationships",
+            "text": (
+                f"Life is shared with {results.get('Spouse','a partner')} "
+                f"and shaped by raising {results.get('Kids','no')} children."
+            )
+        },
+        {
+            "role": "disruption",
+            "text": (
+                f"At some point, {madlibs.get('twist','something unexpected shifts their rhythm')}."
+            )
+        },
+        {
+            "role": "daily texture",
+            "text": (
+                f"Simple routines—like {madlibs.get('habit','small daily rituals')}—"
+                f"become grounding moments."
+            )
+        },
+        {
+            "role": "resolution",
+            "text": (
+                f"Over time, they find contentment in {madlibs.get('favorite','the life they built')}, "
+                f"moving forward together."
+            )
+        },
+    ]
 
-    outline = {}
-
-    outline["opening"] = (
-        f"Your life unfolds in a {results.get('House','home')} "
-        f"located in {results.get('City','a place')}. "
-        f"You are known for being {madlibs.get('trait','yourself')}."
-    )
-
-    outline["routine"] = (
-        f"Your days are shaped by working as {results.get('Job','something')} "
-        f"and sharing life with {results.get('Spouse','someone')}. "
-        f"A familiar part of your routine includes {madlibs.get('habit','simple comforts')}."
-    )
-
-    outline["conflict"] = (
-        f"Life doesn’t stay predictable for long, when "
-        f"{madlibs.get('twist','something unexpected happens')}."
-    )
-
-    if animal and number:
-        outline["growth"] = (
-            f"During this time, you find yourself caring for {number} {animal}"
-            f"{'' if str(number)=='1' else 's'}, adjusting to the added responsibility."
-        )
-    else:
-        outline["growth"] = (
-            f"You slowly adapt, learning how to balance change with stability."
-        )
-
-    outline["resolution"] = (
-        f"Eventually, things settle. With {results.get('Kids','no')} kids, "
-        f"daily life moves forward, often traveling by {results.get('Car','your own means')}, "
-        f"and finding comfort in {madlibs.get('favorite','the small things')}."
-    )
-
-    return outline
 
 # -----------------------------
 # FALLBACK STORY (NO LLM)
@@ -173,39 +179,51 @@ def expand_with_llm(outline, style, results):
         client = OpenAI(api_key=api_key)
 
         expanded_sections = []
+        context_so_far = ""   # 🔹 STEP 3: rolling memory
 
         facts = "\n".join([f"{k}: {v}" for k, v in results.items()])
 
-        for section in outline.values():
+        for section in outline:
             prompt = f"""
-You are expanding a cozy life story.
+You are expanding ONE paragraph of a cozy life story.
 
-Rules:
-- Do NOT add or change facts
-- Do NOT repeat phrases
-- Write 2–3 sentences
-- Third-person perspective
+Story so far (do NOT repeat this content):
+{context_so_far}
+
+Paragraph role: {section['role']}
+
+STRICT RULES:
+- Do NOT mention the town, state, or house unless role == "setting"
+- Do NOT restate family size unless role == "relationships"
+- Do NOT reuse phrases like "in the heart of", "humble", "filled with laughter", "sanctuary"
+- Assume the reader already knows the setting
+- Write 2–3 sentences MAX
+- Focus ONLY on this paragraph’s role
+- Third-person, past or present tense
 - Tone: {STYLE_DESCRIPTORS.get(style)}
 
-Facts:
+Facts (do not change):
 {facts}
 
-Base text:
-{section}
+Base paragraph:
+{section['text']}
 
-Expand gently.
+Rewrite with variation and specificity.
 """
 
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=150,
-                temperature=0.65,
+                temperature=0.55,
             )
 
-            expanded_sections.append(
-                response.choices[0].message.content.strip()
-            )
+            paragraph = response.choices[0].message.content.strip()
+
+            expanded_sections.append(paragraph)
+
+            # 🔹 STEP 3: accumulate memory
+            context_so_far += paragraph + "\n\n"
 
         return "\n\n".join(expanded_sections)
 
