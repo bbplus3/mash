@@ -10,6 +10,7 @@ import random
 # -----------------------------
 st.set_page_config(page_title="MASH-LIBS", layout="centered")
 st.title("🏠 MASH-LIBS")
+st.caption("A look into your future")
 st.markdown("""
 <style>
 
@@ -21,7 +22,7 @@ body {
 /* Main book container */
 .book {
     background: #fffdf8;
-    padding: 2rem;
+    padding: 1.5rem 2rem;
     border-radius: 16px;
     box-shadow: 0 12px 30px rgba(0,0,0,0.08);
     margin-bottom: 2rem;
@@ -49,7 +50,7 @@ body {
 .result-grid {
     background: #faf7f1;
     border-left: 6px solid #c2a76d;
-    padding: 1rem;
+    padding: 0.75rem 1rem;
     border-radius: 10px;
 }
 
@@ -511,11 +512,13 @@ if st.session_state.stage == "result":
         for cat in st.session_state.categories
     }
 
-    st.markdown('<div class="result-grid">', unsafe_allow_html=True)
-    cols = st.columns(2)
-    for i, (k, v) in enumerate(results.items()):
-        cols[i % 2].markdown(f"**{k}** → *{v}*")
-    st.markdown('</div>', unsafe_allow_html=True)
+    with st.container():
+        st.markdown('<div class="result-grid">', unsafe_allow_html=True)
+        cols = st.columns(2)
+        for i, (k, v) in enumerate(results.items()):
+            cols[i % 2].markdown(f"**{k}** → *{v}*")
+        st.markdown('</div>', unsafe_allow_html=True)
+
 
 
     st.divider()
