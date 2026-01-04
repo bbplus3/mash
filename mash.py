@@ -5,64 +5,114 @@ import streamlit as st
 import time
 import random
 
-# =============================
-# PAGE CONFIG
-# =============================
-st.set_page_config(
-    page_title="MASH-LIBS",
-    page_icon="🏠",
-    layout="centered"
-)
+# -----------------------------
+# PAGE SETUP
+# -----------------------------
+st.set_page_config(page_title="MASH-LIBS", layout="centered")
 
-# =============================
-# GLOBAL STYLES
-# =============================
+st.title("🏠 MASH-LIBS")
+st.caption("A quiet glimpse into your future")
+
 st.markdown("""
 <style>
+
+/* Background */
 body {
-    background-color: #f4f6f8;
+    background-color: #f7f3ea;
 }
-h1 {
-    color: #2b6777;
+
+/* Page animation */
+.page {
+    animation: fadeIn 0.45s ease both;
 }
-h2, h3 {
-    color: #355f6b;
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-.card {
-    padding: 1.25rem;
+
+/* Book container */
+.book {
+    background: #fffdf8;
+    padding: 1.75rem 2rem;
+    border-radius: 18px;
+    box-shadow: 0 14px 32px rgba(0,0,0,0.08);
+    margin-bottom: 2rem;
+}
+
+/* Chapter labels */
+.chapter {
+    font-family: "Georgia", serif;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    color: #8b6f47;
+    margin-bottom: 0.25rem;
+}
+
+/* Story text */
+.story-text {
+    font-family: "Georgia", serif;
+    font-size: 1.05rem;
+    line-height: 1.7;
+    color: #2f2f2f;
+    margin-bottom: 0.6rem;
+}
+
+/* Cards */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+.result-card {
+    background: #faf7f1;
     border-radius: 14px;
-    background-color: #ffffff;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-    margin-bottom: 1.2rem;
+    padding: 1rem 1.25rem;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.06);
+    border-left: 5px solid #c2a76d;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.soft {
-    color: #6c757d;
-    font-size: 0.9rem;
+
+.result-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0,0,0,0.12);
 }
-.result-box {
-    background-color: #f8fafc;
-    border-left: 6px solid #2b6777;
-    padding: 1rem;
-    border-radius: 10px;
+
+.card-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #8b6f47;
 }
+
+.card-value {
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+/* Dice */
+.dice {
+    font-size: 3rem;
+    text-align: center;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #8b6f47;
+    margin-top: 2rem;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
-# =============================
+# -----------------------------
 # HELPERS
-# =============================
-def card(title, subtitle=None):
-    st.markdown('<div class="card">', unsafe_allow_html=True)
-    st.subheader(title)
-    if subtitle:
-        st.caption(subtitle)
-
-def end_card():
-    st.markdown('</div>', unsafe_allow_html=True)
-
+# -----------------------------
 def eliminate_to_one(options, count):
-    if not options:
-        return "unknown"
     idx = 0
     opts = options.copy()
     while len(opts) > 1:
@@ -74,159 +124,127 @@ def reset_game():
     st.session_state.clear()
     st.rerun()
 
-# =============================
+# -----------------------------
 # SESSION INIT
-# =============================
+# -----------------------------
 if "stage" not in st.session_state:
     st.session_state.stage = "categories"
     st.session_state.categories = []
     st.session_state.answers = {}
+    st.session_state.count = None
     st.session_state.story = None
-    st.session_state.count = 1
 
-STAGES = ["categories", "answers", "count", "result"]
-st.progress((STAGES.index(st.session_state.stage)+1)/len(STAGES))
-
-st.title("🏠 MASH-LIBS")
-st.caption("A playful glimpse into your wildly specific future")
-
-# =============================
-# STAGE 1 — CATEGORIES
-# =============================
+# -----------------------------
+# PROLOGUE — CATEGORIES
+# -----------------------------
 if st.session_state.stage == "categories":
-    card("🧩 Step 1: Choose Your Life Categories",
-         "These define the dimensions of your future")
+    st.markdown('<div class="page book">', unsafe_allow_html=True)
+    st.markdown('<div class="chapter">Prologue</div>', unsafe_allow_html=True)
+    st.subheader("Choose the pieces of your future")
 
     cats = st.text_input(
-        "Categories (comma-separated)",
+        "Separate them with commas",
         "House, Job, Spouse, Kids, Car, City"
     )
 
-    if st.button("✨ Lock Categories"):
+    if st.button("✨ Begin Your Story"):
         st.session_state.categories = [c.strip() for c in cats.split(",")]
         st.session_state.answers = {c: [] for c in st.session_state.categories}
         st.session_state.stage = "answers"
         st.rerun()
 
-    end_card()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# =============================
-# STAGE 2 — ANSWERS
-# =============================
+# -----------------------------
+# CHAPTER I — ANSWERS
+# -----------------------------
 if st.session_state.stage == "answers":
-    card("✍️ Step 2: Fill In the Possibilities",
-         "Three options per category works best")
+    st.markdown('<div class="page book">', unsafe_allow_html=True)
+    st.markdown('<div class="chapter">Chapter I</div>', unsafe_allow_html=True)
+    st.subheader("Fill the possibilities")
 
     for cat in st.session_state.categories:
         st.markdown(f"**{cat}**")
-        cols = st.columns(3)
         for i in range(3):
-            with cols[i]:
-                v = st.text_input(
-                    f"Option {i+1}",
-                    key=f"{cat}_{i}"
-                )
-                if v and v not in st.session_state.answers[cat]:
-                    st.session_state.answers[cat].append(v)
+            v = st.text_input(f"Option {i+1}", key=f"{cat}_{i}")
+            if v and v not in st.session_state.answers[cat]:
+                st.session_state.answers[cat].append(v)
 
-    if st.button("🔒 Finalize Options"):
-        if any(not v for v in st.session_state.answers.values()):
-            st.error("Every category needs at least one option.")
-        else:
-            st.session_state.stage = "count"
-            st.rerun()
+    if st.button("📜 Seal Your Fate"):
+        st.session_state.stage = "count"
+        st.rerun()
 
-    end_card()
+    st.markdown('</div>', unsafe_allow_html=True)
 
-# =============================
-# STAGE 3 — COUNTING
-# =============================
+# -----------------------------
+# CHAPTER II — DICE COUNT
+# -----------------------------
 if st.session_state.stage == "count":
-    card("🔢 Step 3: The Count",
-         "Tap rhythmically… then stop")
+    st.markdown('<div class="page book">', unsafe_allow_html=True)
+    st.markdown('<div class="chapter">Chapter II</div>', unsafe_allow_html=True)
+    st.subheader("Let chance decide")
 
-    if "tally" not in st.session_state:
-        st.session_state.tally = 0
+    st.caption("Watch the die roll… when it feels right, let fate stop it.")
+
+    if "rolling" not in st.session_state:
+        st.session_state.rolling = True
         st.session_state.start = time.time()
 
-    if st.button("➕ Count"):
-        st.session_state.tally += 1
+    dice = random.randint(1, 6)
+    st.markdown(f'<div class="dice">🎲 {dice}</div>', unsafe_allow_html=True)
 
-    st.metric("Current Count", st.session_state.tally)
+    if st.button("🕯️ Let Fate Decide"):
+        st.session_state.count = dice
+        st.session_state.stage = "result"
+        st.rerun()
 
-    if time.time() - st.session_state.start > 2:
-        if st.button("🛑 STOP"):
-            st.session_state.count = max(1, st.session_state.tally)
-            st.session_state.stage = "result"
-            st.rerun()
+    time.sleep(0.4)
+    st.rerun()
 
-    end_card()
-
-# =============================
-# STORY GENERATION
-# =============================
-def build_story(results, style, madlibs):
-    lines = []
-
-    lines.append(f"You live in a {results.get('House','place')}.")
-
-    if "City" in results:
-        lines.append(f"Life unfolds in {results['City']}.")
-
-    if "Job" in results:
-        lines.append(f"Your days revolve around working as {results['Job']}.")
-
-    if "Spouse" in results:
-        lines.append(f"You share your life with {results['Spouse']}.")
-
-    if "Kids" in results:
-        lines.append(f"Your household includes {results['Kids']} kids.")
-
-    if madlibs.get("animal"):
-        n = madlibs.get("number","1")
-        lines.append(f"In the near future, you welcome {n} {madlibs['animal']} as a pet.")
-
-    return " ".join(lines)
-
-# =============================
-# FINAL RESULT
-# =============================
+# -----------------------------
+# FINAL — STORY
+# -----------------------------
 if st.session_state.stage == "result":
-    card("🎉 Your Future Revealed")
+    st.markdown('<div class="page book">', unsafe_allow_html=True)
+    st.markdown('<div class="chapter">Chapter III</div>', unsafe_allow_html=True)
+    st.subheader("Your MASH Future")
 
     results = {
         cat: eliminate_to_one(st.session_state.answers[cat], st.session_state.count)
         for cat in st.session_state.categories
     }
 
-    st.markdown('<div class="result-box">', unsafe_allow_html=True)
-    cols = st.columns(2)
-    for i,(k,v) in enumerate(results.items()):
-        cols[i%2].markdown(f"**{k}** → *{v}*")
+    st.markdown('<div class="card-grid">', unsafe_allow_html=True)
+    for k, v in results.items():
+        st.markdown(f"""
+        <div class="result-card">
+            <div class="card-label">{k}</div>
+            <div class="card-value">{v}</div>
+        </div>
+        """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    end_card()
-
-    # MADLIBS
-    card("🧩 Story Extras", "Optional details that enrich the narrative")
-    madlibs = {}
-    for key in ["animal","number"]:
-        madlibs[key] = st.text_input(key.capitalize())
-    end_card()
-
-    style = st.selectbox(
-        "🎭 Narrative Style",
-        ["Neutral","Whimsical","Romantic","Chaotic","Serious"]
-    )
-
-    if st.button("📖 Generate Story"):
-        with st.spinner("Writing your story…"):
-            st.session_state.story = build_story(results, style, madlibs)
+    if st.button("📖 Turn the Page"):
+        story = " ".join([
+            "At first, life settles gently into place.",
+            f"You live in {results.get('House','somewhere')}.",
+            f"You work as {results.get('Job','something')}.",
+            "In time, things grow complicated.",
+            "Eventually, you find your balance again."
+        ])
+        st.session_state.story = story
 
     if st.session_state.story:
-        card("📖 A Day in the Life")
-        st.write(st.session_state.story)
-        end_card()
+        st.markdown('<div class="chapter">Chapter IV</div>', unsafe_allow_html=True)
+        st.subheader("A Day in the Life")
 
-    if st.button("🔁 Play Again"):
+        for sentence in st.session_state.story.split(". "):
+            st.markdown(f'<div class="story-text">{sentence}.</div>', unsafe_allow_html=True)
+            time.sleep(0.15)
+
+    st.markdown('<div class="footer">☕ Take your time. Futures are fragile things.</div>', unsafe_allow_html=True)
+
+    if st.button("🔁 Start a New Life"):
         reset_game()
+
+    st.markdown('</div>', unsafe_allow_html=True)
