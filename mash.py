@@ -6,6 +6,25 @@ import time
 import random
 
 # -----------------------------
+# SESSION STATE INITIALIZATION
+# -----------------------------
+DEFAULT_STATE = {
+    "stage": "name",
+    "player_name": "",
+    "categories": [],
+    "answers": {},
+    "count": None,
+    "story": None,
+    "expanded_story": None,
+    "tally": 0,
+    "start_time": None,
+}
+
+for key, value in DEFAULT_STATE.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+
+# -----------------------------
 # PAGE SETUP
 # -----------------------------
 st.set_page_config(page_title="MASH", layout="centered")
@@ -26,7 +45,8 @@ def eliminate_to_one(options, count):
     return opts[0]
 
 def reset_game():
-    st.session_state.clear()
+    for key in list(st.session_state.keys()):
+        del st.session_state[key]
     st.rerun()
 
 def pluralize(word, count):
